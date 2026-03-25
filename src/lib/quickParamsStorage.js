@@ -130,3 +130,30 @@ export function deleteQuickParamItem(groupId, itemId) {
   g.items = g.items.filter((x) => x.id !== itemId)
   saveGroups(list)
 }
+
+export function reorderGroups(fromIndex, toIndex) {
+  const list = loadGroups()
+  if (fromIndex < 0 || fromIndex >= list.length) return
+  if (toIndex < 0 || toIndex >= list.length) return
+  if (fromIndex === toIndex) return
+  const next = [...list]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  saveGroups(next)
+}
+
+/** 同一分组内快捷参数排序 */
+export function reorderQuickParamItems(groupId, fromIndex, toIndex) {
+  const list = loadGroups()
+  const g = list.find((x) => x.id === groupId)
+  if (!g || !Array.isArray(g.items)) return
+  const items = g.items
+  if (fromIndex < 0 || fromIndex >= items.length) return
+  if (toIndex < 0 || toIndex >= items.length) return
+  if (fromIndex === toIndex) return
+  const next = [...items]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  g.items = next
+  saveGroups(list)
+}
