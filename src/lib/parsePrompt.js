@@ -15,6 +15,33 @@ export function extractPlaceholders(text) {
   return keys
 }
 
+/**
+ * 将模版拆成文本段与占位符段，占位符带与 extractPlaceholders 一致的编号（从 1 起）。
+ * @returns {Array<{ type: 'text', content: string } | { type: 'ph', key: string, keyIndex: number }>}
+ */
+export function getTemplateDisplaySegments(text) {
+  if (!text) return []
+  const keys = extractPlaceholders(text)
+  const keyToIndex = new Map(keys.map((k, i) => [k, i + 1]))
+  const re = /\[([^\]]+)\]/g
+  const segments = []
+  let lastIndex = 0
+  let m
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > lastIndex) {
+      segments.push({ type: 'text', content: text.slice(lastIndex, m.index) })
+    }
+    const inner = m[1].trim()
+    const keyIndex = keyToIndex.get(inner) ?? 0
+    segments.push({ type: 'ph', key: inner, keyIndex })
+    lastIndex = m.index + m[0].length
+  }
+  if (lastIndex < text.length) {
+    segments.push({ type: 'text', content: text.slice(lastIndex) })
+  }
+  return segments
+}
+
 /** 将模版中所有 [key] 替换为 values[key]（无括号） */
 export function assemblePrompt(template, values) {
   if (!template) return ''

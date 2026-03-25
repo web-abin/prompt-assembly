@@ -12,6 +12,9 @@ html[data-theme='light'] {
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
   --modal-backdrop: rgba(8, 6, 13, 0.45);
+  --ph-highlight-bg: rgba(170, 59, 255, 0.14);
+  --ph-highlight-border: rgba(170, 59, 255, 0.4);
+  --ph-badge-fg: #fff;
 
   color-scheme: light;
 }
@@ -29,6 +32,9 @@ html[data-theme='dark'] {
   --shadow:
     rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   --modal-backdrop: rgba(0, 0, 0, 0.55);
+  --ph-highlight-bg: rgba(192, 132, 252, 0.18);
+  --ph-highlight-border: rgba(192, 132, 252, 0.45);
+  --ph-badge-fg: #fff;
 
   color-scheme: dark;
 }
