@@ -7,7 +7,29 @@ import {
   getTemplateDisplaySegments,
 } from '../lib/parsePrompt'
 import ThemeToggle from '../components/ThemeToggle'
+import QuickParamsPickerModal from '../components/QuickParamsPickerModal'
 import { useToast } from '../context/ToastContext'
+
+function QuickFillIcon() {
+  return (
+    <svg
+      className="icon-btn-svg"
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 function TemplateBlock({ body }) {
   const [open, setOpen] = useState(true)
@@ -55,6 +77,7 @@ export default function Detail() {
   const { showToast } = useToast()
   const tpl = useMemo(() => getTemplate(id), [id])
   const [values, setValues] = useState({})
+  const [quickPickerKey, setQuickPickerKey] = useState(null)
   const outputRef = useRef(null)
 
   const keys = useMemo(() => (tpl ? extractPlaceholders(tpl.body) : []), [tpl])
@@ -111,16 +134,27 @@ export default function Detail() {
               <div className="placeholder-form">
                 {keys.map((key, i) => (
                   <div key={key} className="form-row">
-                    <label
-                      className="field-label field-label-numbered"
-                      htmlFor={`ph-${key}`}
-                      aria-label={`第 ${i + 1} 项：${key}`}
-                    >
-                      <span className="placeholder-form-num" aria-hidden="true">
-                        {i + 1}
-                      </span>
-                      <span className="placeholder-form-key">{key}</span>
-                    </label>
+                    <div className="field-label-row">
+                      <label
+                        className="field-label field-label-numbered"
+                        htmlFor={`ph-${key}`}
+                        aria-label={`第 ${i + 1} 项：${key}`}
+                      >
+                        <span className="placeholder-form-num" aria-hidden="true">
+                          {i + 1}
+                        </span>
+                        <span className="placeholder-form-key">{key}</span>
+                      </label>
+                      <button
+                        type="button"
+                        className="icon-btn icon-btn-compact"
+                        title="从快捷参数填入"
+                        aria-label={`从快捷参数填入「${key}」`}
+                        onClick={() => setQuickPickerKey(key)}
+                      >
+                        <QuickFillIcon />
+                      </button>
+                    </div>
                     <textarea
                       id={`ph-${key}`}
                       className="textarea"
@@ -154,6 +188,14 @@ export default function Detail() {
           <p className="aside-hint">修改上方表单会重新拼接；也可在本框内编辑后再复制。</p>
         </aside>
       </div>
+
+      <QuickParamsPickerModal
+        open={quickPickerKey !== null}
+        onClose={() => setQuickPickerKey(null)}
+        onSelect={(content) => {
+          if (quickPickerKey) setField(quickPickerKey, content)
+        }}
+      />
     </div>
   )
 }

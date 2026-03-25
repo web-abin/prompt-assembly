@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getAllTemplates } from '../lib/storage'
 import { templatesToMarkdown, downloadTextFile } from '../lib/exportTemplatesMd'
 import TemplateModal from '../components/TemplateModal'
+import QuickParamsManageModal from '../components/QuickParamsManageModal'
 import ThemeToggle from '../components/ThemeToggle'
 import { useToast } from '../context/ToastContext'
 
@@ -43,6 +44,7 @@ export default function Home() {
   const [modal, setModal] = useState(false)
   const [createKey, setCreateKey] = useState(0)
   const [editing, setEditing] = useState(null)
+  const [quickParamsOpen, setQuickParamsOpen] = useState(false)
   const [, tick] = useState(0)
   const templates = getAllTemplates()
 
@@ -71,6 +73,13 @@ export default function Home() {
         </div>
         <div className="page-header-actions">
           <ThemeToggle />
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setQuickParamsOpen(true)}
+          >
+            快捷参数
+          </button>
           <button
             type="button"
             className="btn btn-secondary"
@@ -148,6 +157,12 @@ export default function Home() {
           }}
         />
       )}
+
+      <QuickParamsManageModal
+        key={quickParamsOpen ? 'open' : 'closed'}
+        open={quickParamsOpen}
+        onClose={() => setQuickParamsOpen(false)}
+      />
     </div>
   )
 }
