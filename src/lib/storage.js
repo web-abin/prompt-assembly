@@ -54,3 +54,15 @@ export function deleteTemplate(id) {
   const list = loadRaw().filter((t) => t.id !== id)
   saveRaw(list)
 }
+
+/** 将模版列表按下标移动（拖拽排序） */
+export function reorderTemplates(fromIndex, toIndex) {
+  const list = loadRaw()
+  if (fromIndex < 0 || fromIndex >= list.length) return
+  if (toIndex < 0 || toIndex >= list.length) return
+  if (fromIndex === toIndex) return
+  const next = [...list]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  saveRaw(next)
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   getAllGroups,
   addGroup,
@@ -7,6 +7,8 @@ import {
   addQuickParam,
   updateQuickParamItem,
   deleteQuickParamItem,
+  reorderGroups,
+  reorderQuickParamItems,
 } from '../lib/quickParamsStorage'
 import { exportQuickParamsMd } from '../lib/exportQuickParamsMd'
 import { useToast } from '../context/ToastContext'
@@ -20,6 +22,8 @@ export default function QuickParamsManageModal({ open, onClose }) {
   const [groupForm, setGroupForm] = useState({ id: null, title: '' })
   const [paramForm, setParamForm] = useState({ groupId: '', id: null, content: '' })
   const [, setListVersion] = useState(0)
+  const dragGroupIndexRef = useRef(null)
+  const dragItemRef = useRef(null)
 
   const groups = getAllGroups()
 
@@ -134,9 +138,42 @@ export default function QuickParamsManageModal({ open, onClose }) {
               <p className="muted quick-params-empty">暂无分组，请先「创建分组」，再在分组内添加快捷参数。</p>
             ) : (
               <div className="quick-params-groups">
-                {groups.map((g) => (
-                  <section key={g.id} className="qp-group-card">
+                {groups.map((g, gi) => (
+                  <section
+                    key={g.id}
+                    className="qp-group-card"
+                    onDragOver={(e) => {
+                      if (dragGroupIndexRef.current === null) return
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = 'move'
+                      const from = dragGroupIndexRef.current
+                      if (from === gi) return
+                      reorderGroups(from, gi)
+                      dragGroupIndexRef.current = gi
+                      refresh()
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      dragGroupIndexRef.current = null
+                    }}
+                  >
                     <div className="qp-group-head">
+                      <button
+                        type="button"
+                        className="drag-handle"
+                        aria-label="拖拽排序分组"
+                        draggable
+                        onDragStart={(e) => {
+                          dragGroupIndexRef.current = gi
+                          e.dataTransfer.effectAllowed = 'move'
+                          e.stopPropagation()
+                        }}
+                        onDragEnd={() => {
+                          dragGroupIndexRef.current = null
+                        }}
+                      >
+                        ⋮⋮
+                      </button>
                       <h3 className="qp-group-title">{g.title || '未命名分组'}</h3>
                       <div className="qp-group-head-actions">
                         <button
@@ -166,8 +203,41 @@ export default function QuickParamsManageModal({ open, onClose }) {
                       <p className="muted qp-group-empty">本组暂无参数，点击「添加参数」。</p>
                     ) : (
                       <ul className="quick-params-list qp-group-items">
-                        {(g.items || []).map((item) => (
-                          <li key={item.id} className="quick-params-item">
+                        {(g.items || []).map((item, ii) => (
+                          <li
+                            key={item.id}
+                            className="quick-params-item qp-item-row"
+                            onDragOver={(e) => {
+                              const drag = dragItemRef.current
+                              if (!drag || drag.groupId !== g.id) return
+                              e.preventDefault()
+                              e.dataTransfer.dropEffect = 'move'
+                              if (drag.index === ii) return
+                              reorderQuickParamItems(g.id, drag.index, ii)
+                              dragItemRef.current = { groupId: g.id, index: ii }
+                              refresh()
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              dragItemRef.current = null
+                            }}
+                          >
+                            <button
+                              type="button"
+                              className="drag-handle"
+                              aria-label="拖拽排序参数"
+                              draggable
+                              onDragStart={(e) => {
+                                dragItemRef.current = { groupId: g.id, index: ii }
+                                e.dataTransfer.effectAllowed = 'move'
+                                e.stopPropagation()
+                              }}
+                              onDragEnd={() => {
+                                dragItemRef.current = null
+                              }}
+                            >
+                              ⋮⋮
+                            </button>
                             <pre className="quick-params-preview">
                               {(item.content || '（空）').slice(0, PREVIEW_LEN)}
                               {(item.content || '').length > PREVIEW_LEN ? '…' : ''}
