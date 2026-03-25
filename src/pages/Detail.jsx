@@ -1,12 +1,18 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getTemplate } from '../lib/storage'
-import { extractPlaceholders, assemblePrompt } from '../lib/parsePrompt'
+import {
+  extractPlaceholders,
+  assemblePrompt,
+  getTemplateDisplaySegments,
+} from '../lib/parsePrompt'
 import ThemeToggle from '../components/ThemeToggle'
 import { useToast } from '../context/ToastContext'
 
 function TemplateBlock({ body }) {
   const [open, setOpen] = useState(true)
+  const segments = useMemo(() => getTemplateDisplaySegments(body ?? ''), [body])
+
   return (
     <section className="template-section">
       <button
@@ -18,7 +24,28 @@ function TemplateBlock({ body }) {
         <span className="collapse-label">Prompt 模版</span>
         <span className="collapse-icon">{open ? '收起' : '展开'}</span>
       </button>
-      {open && <pre className="template-block">{body || '（空）'}</pre>}
+      {open && (
+        <div className="template-block template-block-rendered">
+          {segments.length === 0 ? (
+            <span className="muted">（空）</span>
+          ) : (
+            segments.map((seg, i) =>
+              seg.type === 'text' ? (
+                <span key={i}>{seg.content}</span>
+              ) : (
+                <span
+                  key={i}
+                  className="ph-token"
+                  title={`占位符 ${seg.keyIndex}：${seg.key}`}
+                >
+                  <span className="ph-badge">{seg.keyIndex}</span>
+                  <span className="ph-brackets">[{seg.key}]</span>
+                </span>
+              ),
+            )
+          )}
+        </div>
+      )}
     </section>
   )
 }
@@ -82,10 +109,17 @@ export default function Detail() {
               <p className="muted">本模版没有 [占位符]，可直接在右侧编辑全文。</p>
             ) : (
               <div className="placeholder-form">
-                {keys.map((key) => (
+                {keys.map((key, i) => (
                   <div key={key} className="form-row">
-                    <label className="field-label" htmlFor={`ph-${key}`}>
-                      {key}
+                    <label
+                      className="field-label field-label-numbered"
+                      htmlFor={`ph-${key}`}
+                      aria-label={`第 ${i + 1} 项：${key}`}
+                    >
+                      <span className="placeholder-form-num" aria-hidden="true">
+                        {i + 1}
+                      </span>
+                      <span className="placeholder-form-key">{key}</span>
                     </label>
                     <textarea
                       id={`ph-${key}`}
