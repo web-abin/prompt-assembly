@@ -2,6 +2,8 @@ import { useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getTemplate } from '../lib/storage'
 import { extractPlaceholders, assemblePrompt } from '../lib/parsePrompt'
+import ThemeToggle from '../components/ThemeToggle'
+import { useToast } from '../context/ToastContext'
 
 function TemplateBlock({ body }) {
   const [open, setOpen] = useState(true)
@@ -23,6 +25,7 @@ function TemplateBlock({ body }) {
 
 export default function Detail() {
   const { id } = useParams()
+  const { showToast } = useToast()
   const tpl = useMemo(() => getTemplate(id), [id])
   const [values, setValues] = useState({})
   const outputRef = useRef(null)
@@ -50,6 +53,7 @@ export default function Detail() {
       document.execCommand('copy')
       document.body.removeChild(ta)
     }
+    showToast('已复制到剪贴板')
   }
 
   if (!tpl) {
@@ -62,59 +66,60 @@ export default function Detail() {
   }
 
   return (
-    <div className="page detail-page detail-layout">
-      <div className="detail-main">
-        <nav className="breadcrumb">
-          <Link to="/">← 模版列表</Link>
-        </nav>
+    <div className="page detail-page detail-page-fill">
+      <div className="detail-layout detail-layout-fill">
+        <div className="detail-main">
+          <nav className="breadcrumb breadcrumb-bar">
+            <Link to="/">← 模版列表</Link>
+            <ThemeToggle />
+          </nav>
 
-        <TemplateBlock body={tpl.body} />
+          <TemplateBlock body={tpl.body} />
 
-        <section className="form-section">
-          <h2 className="section-title">填写占位符</h2>
-          {keys.length === 0 ? (
-            <p className="muted">本模版没有 [占位符]，可直接在右侧编辑全文。</p>
-          ) : (
-            <div className="placeholder-form">
-              {keys.map((key) => (
-                <div key={key} className="form-row">
-                  <label className="field-label" htmlFor={`ph-${key}`}>
-                    {key}
-                  </label>
-                  <textarea
-                    id={`ph-${key}`}
-                    className="textarea"
-                    rows={3}
-                    placeholder={`输入「${key}」`}
-                    value={values[key] ?? ''}
-                    onChange={(e) => setField(key, e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      <aside className="detail-aside">
-        <div className="aside-header">
-          <h2 className="section-title">组装结果</h2>
-          <button type="button" className="btn btn-primary btn-sm" onClick={handleCopy}>
-            复制
-          </button>
+          <section className="form-section">
+            <h2 className="section-title">填写占位符</h2>
+            {keys.length === 0 ? (
+              <p className="muted">本模版没有 [占位符]，可直接在右侧编辑全文。</p>
+            ) : (
+              <div className="placeholder-form">
+                {keys.map((key) => (
+                  <div key={key} className="form-row">
+                    <label className="field-label" htmlFor={`ph-${key}`}>
+                      {key}
+                    </label>
+                    <textarea
+                      id={`ph-${key}`}
+                      className="textarea"
+                      rows={3}
+                      placeholder={`输入「${key}」`}
+                      value={values[key] ?? ''}
+                      onChange={(e) => setField(key, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
-        <textarea
-          ref={outputRef}
-          key={assembled}
-          className="textarea aside-output"
-          defaultValue={assembled}
-          spellCheck={false}
-          placeholder="填写左侧或在此直接编辑…"
-        />
-        <p className="aside-hint">
-          修改上方表单会重新根据模版拼接；你也可以在本框内任意编辑后再复制。
-        </p>
-      </aside>
+
+        <aside className="detail-aside detail-aside-fill">
+          <div className="aside-header">
+            <h2 className="section-title">组装结果</h2>
+            <button type="button" className="btn btn-primary btn-sm" onClick={handleCopy}>
+              复制
+            </button>
+          </div>
+          <textarea
+            ref={outputRef}
+            key={assembled}
+            className="textarea aside-output aside-output-fill"
+            defaultValue={assembled}
+            spellCheck={false}
+            placeholder="填写左侧或在此直接编辑…"
+          />
+          <p className="aside-hint">修改上方表单会重新拼接；也可在本框内编辑后再复制。</p>
+        </aside>
+      </div>
     </div>
   )
 }

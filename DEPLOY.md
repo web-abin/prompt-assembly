@@ -23,10 +23,11 @@
 1. **仓库推到 GitHub**  
    在 GitHub 新建仓库，把本地项目推上去（默认分支名为 `main` 或 `master` 均可，工作流两者都支持）。
 
-2. **开启 Pages 的 Actions 来源**  
+2. **开启 Pages 的 Actions 来源（必须点保存）**  
    - 打开仓库 **Settings → Pages**。  
    - **Build and deployment → Source** 选 **GitHub Actions**。  
-   - 若曾选过「从分支部署」，改成 **GitHub Actions** 后保存。
+   - 若页面底部有 **Save**，务必点击保存；仅下拉选中但未保存时，后台仍未启用 Actions 部署，后续会出现 **404 Creating Pages deployment**。  
+   - 若曾选过「从分支部署」，先改成 **GitHub Actions** 再保存。
 
 3. **首次运行工作流**（若需要）  
    - 打开 **Actions** 标签，选中 **Deploy to GitHub Pages**，点 **Run workflow** 可手动触发（`workflow_dispatch`）。
@@ -64,6 +65,25 @@ npm run preview
 | Actions 报错 `npm ci` 失败 | 确保已提交 `package-lock.json` 并执行 `npm ci` 本地能通过。 |
 | 部署成功但仍是旧页面 | 强刷或无痕打开；或等 CDN 缓存几分钟。 |
 | 需要 `github.io` 根域名（如 `user.github.io` 仓库） | 把 `vite.config.js` 的 `base` 改为 `'/'` 再构建；本说明默认是 **项目页** `/<仓库名>/`。 |
+| **`deploy-pages` 报错：`Creating Pages deployment failed` / `HttpError: Not Found` (404)** | 见下一节。 |
+
+### `Failed to create deployment (status: 404)` / `Ensure GitHub Pages has been enabled`
+
+说明 GitHub 端**还没有为当前仓库登记「通过 Actions 发布 Pages」**，`deploy-pages` 调用创建部署的 API 会返回 404。按顺序检查：
+
+1. **Settings → Pages**  
+   - **Source** 必须是 **GitHub Actions**。  
+   - 若有 **Save**，保存一次。改完等几秒再 **Re-run** 失败的工作流。
+
+2. **仓库可见性与套餐**  
+   - **私有仓库**：免费账号若未开通「私有仓库的 GitHub Pages」，可能无法通过 Actions 部署；可先把仓库改为 **Public** 再试，或升级 GitHub 套餐后重试。  
+   - **Fork 的仓库**：默认往往不能往 `gh-pages`/Actions Pages 发布，需用**自己名下的非 fork 仓库**。
+
+3. **组织仓库**  
+   - 若在 **Organization** 下，需管理员在组织 **Settings → Actions → General** 允许 **GitHub Actions**，且 **Pages** 策略允许从 Actions 部署。
+
+4. **仍失败时**  
+   - 在 **Settings → Pages** 将 Source 临时改为 **Deploy from a branch**，任选分支保存；再改回 **GitHub Actions** 并保存，强制刷新 Pages 配置后重新运行 workflow。
 
 ## 与截图里「Branch + /(root)」的区别
 
