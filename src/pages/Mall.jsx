@@ -6,6 +6,8 @@ import { addTemplate } from '../lib/storage'
 import { data } from '../data/template'
 import Tippy from '@tippyjs/react'
 import 'tippy.js/dist/tippy.css'
+import RedeemModal from '../components/RedeemModal'
+import { hasRedeemed } from '../lib/redeem'
 
 function CartIcon() {
   return (
@@ -34,6 +36,9 @@ function CartIcon() {
 export default function Mall() {
   const { showToast } = useToast()
   const [q, setQ] = useState('')
+  const [redeemOpen, setRedeemOpen] = useState(false)
+  const [redeemMsg, setRedeemMsg] = useState('')
+  const [, setRedeemVersion] = useState(0)
   const templates = useMemo(() => {
     const list = Array.isArray(data) ? data : []
     const norm = String(q).trim().toLowerCase()
@@ -50,11 +55,29 @@ export default function Mall() {
     showToast('已添加到我的模版')
   }
 
+  function openRedeem(message) {
+    setRedeemMsg(message)
+    setRedeemOpen(true)
+  }
+
+  function randNoise(seedStr = '', len = 80) {
+    const symbols = '█▓▒▤▥▧▨▦▩◼︎◻︎◽◾◆◇■□△▲▼▱▰─━·•ABCDEFGHJKLMNPQRSTUVWXYZ123456789'
+    const pool = symbols
+    let seed = 0
+    for (let i = 0; i < seedStr.length; i++) seed = (seed + seedStr.charCodeAt(i) * (i + 1)) % 997
+    let s = ''
+    for (let i = 0; i < len; i++) {
+      const idx = (seed + i * 17) % pool.length
+      s += pool[idx]
+    }
+    return s
+  }
+
   return (
     <div className="page mall-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">模版商城</h1>
+          <h1 className="page-title">模版市场</h1>
           <p className="page-sub">
             内置模版列表，支持标题模糊搜索与一键加入我的模版。
           </p>
@@ -85,13 +108,16 @@ export default function Mall() {
       ) : (
         <div className="mall-list-box">
           <ul className="template-list mall-list">
-            {templates.map((t, i) => (
+            {templates.map((t, i) => {
+              const locked = !t.free && !hasRedeemed()
+              const previewText = locked ? randNoise(t.title || '', 120) : (t.content || '（空模版）')
+              return (
               <li key={`${t.title}-${i}`} className="template-item">
                 <div className="template-card-wrap mall-card-wrap">
                 <Tippy
                   content={
-                    <div className="mall-tooltip-content">
-                      {t.content || '（空模版）'}
+                    <div className="mall-tooltip-content" style={locked ? { filter: 'blur(6px)' } : undefined}>
+                      {previewText}
                     </div>
                   }
                   maxWidth={540}
@@ -102,20 +128,40 @@ export default function Mall() {
                   hideOnClick={false}
                   offset={[0, 8]}
                 >
-                  <div className="template-card mall-card">
+                  <div
+                    className="template-card mall-card"
+                    onClick={() => {
+                      if (locked) openRedeem('需要使用兑换码才能使用此模版')
+                    }}
+                    role="button"
+                    tabIndex={locked ? 0 : -1}
+                    onKeyDown={(e) => {
+                      if (locked && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault()
+                        openRedeem('需要使用兑换码才能使用此模版')
+                      }
+                    }}
+                  >
                     <h3 className="template-card-title">{t.title}</h3>
                     <p
                       className="template-card-preview"
-                      style={{ WebkitLineClamp: 6 }}
+                      style={{ WebkitLineClamp: 6, ...(locked ? { filter: 'blur(6px)', userSelect: 'none' } : null) }}
                     >
-                      {t.content || '（空模版）'}
+                      {previewText}
                     </p>
                   </div>
                 </Tippy>
                   <button
                     type="button"
                     className="mall-add-btn"
-                    onClick={() => handleAddToMy(t)}
+                    onClick={() => {
+                      if (locked) {
+                        openRedeem('需要使用兑换码才能使用此模版')
+                        return
+                      }
+                      handleAddToMy(t)
+                    }}
+                    disabled={locked}
                     aria-label={`添加到我的模版：${t.title}`}
                   >
                     <span className="mall-add-label">添加到我的模版</span>
@@ -123,10 +169,16 @@ export default function Mall() {
                   </button>
                 </div>
               </li>
-            ))}
+            )})}
           </ul>
         </div>
       )}
+      <RedeemModal
+        open={redeemOpen}
+        message={redeemMsg}
+        onClose={() => setRedeemOpen(false)}
+        onRedeemed={() => setRedeemVersion((n) => n + 1)}
+      />
     </div>
   )
 }

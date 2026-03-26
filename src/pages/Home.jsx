@@ -1,6 +1,10 @@
 import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getAllTemplates, reorderTemplates, deleteTemplate } from '../lib/storage'
+import {
+  getAllTemplates,
+  reorderTemplates,
+  deleteTemplate
+} from '../lib/storage'
 import { templatesToMarkdown, downloadTextFile } from '../lib/exportTemplatesMd'
 import { copyTextToClipboard } from '../lib/copyText'
 import TemplateModal from '../components/TemplateModal'
@@ -8,6 +12,9 @@ import QuickParamsManageModal from '../components/QuickParamsManageModal'
 import ThemeToggle from '../components/ThemeToggle'
 import { useToast } from '../context/ToastContext'
 import StyleReferenceModal from '../components/StyleReferenceModal'
+import RedeemModal from '../components/RedeemModal'
+import giftUrl from '../assets/gift.png'
+import iconMall from '../assets/icon-mall.png'
 
 const PREVIEW_LINES = 4
 
@@ -100,6 +107,7 @@ export default function Home() {
   const [editing, setEditing] = useState(null)
   const [quickParamsOpen, setQuickParamsOpen] = useState(false)
   const [styleRefOpen, setStyleRefOpen] = useState(false)
+  const [redeemOpen, setRedeemOpen] = useState(false)
   const [, tick] = useState(0)
   const dragIndexRef = useRef(null)
   const templates = getAllTemplates()
@@ -137,7 +145,9 @@ export default function Home() {
       <header className="page-header">
         <div>
           <h1 className="page-title">Prompt 拼接</h1>
-          <p className="page-sub">本地保存模版，填写占位符并一键复制组装结果。</p>
+          <p className="page-sub">
+            本地保存模版，填写占位符并一键复制组装结果。
+          </p>
         </div>
         <div className="page-header-actions">
           <ThemeToggle />
@@ -167,13 +177,18 @@ export default function Home() {
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-mall"
             onClick={() => navigate('/mall')}
             title="内置模版列表"
           >
-            模版商城
+            <img src={iconMall} alt="" />
+            模版市场
           </button>
-          <button type="button" className="btn btn-primary" onClick={openCreate}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={openCreate}
+          >
             创建 Prompt 模版
           </button>
         </div>
@@ -309,6 +324,19 @@ export default function Home() {
       <StyleReferenceModal
         open={styleRefOpen}
         onClose={() => setStyleRefOpen(false)}
+      />
+
+      <img
+        src={giftUrl}
+        alt="礼物"
+        className="gift-float"
+        onClick={() => setRedeemOpen(true)}
+      />
+      <RedeemModal
+        open={redeemOpen}
+        onClose={() => setRedeemOpen(false)}
+        onRedeemed={() => showToast('兑换成功')}
+        message="使用兑换码才能享受更多权益"
       />
     </div>
   )

@@ -455,7 +455,10 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
 }
 
 .mall-tooltip-content {
-  max-height: 180px;
+  max-width: 500px;
+  width: max-content;
+  max-height: 320px;
+  padding: 12px;
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
@@ -712,9 +715,18 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   color: var(--text-h);
   border-color: var(--border);
 }
+.btn-secondary img{
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
 
 .btn-secondary:hover {
   border-color: var(--accent-border);
+}
+
+.btn-mall{
+  background: var(--accent-bg);
 }
 
 .btn:disabled {
@@ -778,6 +790,58 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+/* Mall add button disabled state */
+.mall-add-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Redeem modal extras */
+.redeem-tip {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.redeem-qrcode {
+  display: grid;
+  grid-template-columns: auto;
+  justify-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.redeem-qrcode-img {
+  width: min(220px, 100%);
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.redeem-qrcode-caption {
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* Floating gift */
+.gift-float {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: auto;
+  z-index: 99;
+  cursor: pointer;
+  animation: wobble 2.2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
+}
+
+@keyframes wobble {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  25% { transform: translateY(-50%) rotate(6deg); }
+  50% { transform: translateY(-50%) rotate(0deg); }
+  75% { transform: translateY(-50%) rotate(-6deg); }
+  100% { transform: translateY(-50%) rotate(0deg); }
 }
 
 .quick-params-toolbar {
