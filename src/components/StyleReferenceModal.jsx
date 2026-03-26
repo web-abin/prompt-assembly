@@ -117,7 +117,8 @@ export default function StyleReferenceModal({ open, onClose }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '120px minmax(0, 1fr)', gap: 12, alignItems: 'stretch' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10 }}>
                     {(() => {
-                      const imgSrc = new URL(`game-style/${s.img}`, import.meta.env.BASE_URL).toString()
+                      const base = (import.meta.env?.BASE_URL || '/').replace(/\/+$/, '/')
+                      const imgSrc = `${base}game-style/${s.img}`
                       return (
                     <img
                       src={imgSrc}
