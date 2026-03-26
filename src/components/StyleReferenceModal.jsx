@@ -116,13 +116,18 @@ export default function StyleReferenceModal({ open, onClose }) {
               <li key={s.id} style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg)', boxShadow: 'var(--shadow)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '120px minmax(0, 1fr)', gap: 12, alignItems: 'stretch' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10 }}>
+                    {(() => {
+                      const imgSrc = new URL(`game-style/${s.img}`, import.meta.env.BASE_URL).toString()
+                      return (
                     <img
-                      src={`/game-style/${s.img}`}
+                      src={imgSrc}
                       alt={s.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)', cursor: 'zoom-in' }}
                       loading="lazy"
-                      onClick={() => setPreview({ src: `/game-style/${s.img}`, title: s.name })}
+                      onClick={() => setPreview({ src: imgSrc, title: s.name })}
                     />
+                      )
+                    })()}
                   </div>
                   <div style={{ padding: '12px 12px 12px 0', minWidth: 0 }}>
                     <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 600, color: 'var(--text-h)' }}>
