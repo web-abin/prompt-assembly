@@ -3,6 +3,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
 import Home from './pages/Home'
 import Detail from './pages/Detail'
+import Mall from './pages/Mall'
 import './App.css'
 
 function DetailRoute() {
@@ -17,6 +18,7 @@ export default function App() {
         <HashRouter>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/mall" element={<Mall />} />
             <Route path="/template/:id" element={<DetailRoute />} />
           </Routes>
         </HashRouter>

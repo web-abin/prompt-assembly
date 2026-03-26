@@ -155,6 +155,14 @@ export default function Home() {
           >
             导出模版
           </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => navigate('/mall')}
+            title="内置模版列表"
+          >
+            模版商城
+          </button>
           <button type="button" className="btn btn-primary" onClick={openCreate}>
             创建 Prompt 模版
           </button>
