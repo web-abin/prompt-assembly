@@ -799,7 +799,7 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
 
 .modal-title {
   font-size: 20px;
-  margin: 0;
+  margin: 0 0 14px 0;
 }
 
 .modal-body-input {
