@@ -61,7 +61,7 @@ export default function RedeemModal({ open, onClose, onRedeemed, message }) {
             兑换
           </button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            暂时不需要了
+            暂时不需要
           </button>
         </div>
       </div>
