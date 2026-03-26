@@ -7,6 +7,7 @@ import TemplateModal from '../components/TemplateModal'
 import QuickParamsManageModal from '../components/QuickParamsManageModal'
 import ThemeToggle from '../components/ThemeToggle'
 import { useToast } from '../context/ToastContext'
+import StyleReferenceModal from '../components/StyleReferenceModal'
 
 const PREVIEW_LINES = 4
 
@@ -98,6 +99,7 @@ export default function Home() {
   const [createKey, setCreateKey] = useState(0)
   const [editing, setEditing] = useState(null)
   const [quickParamsOpen, setQuickParamsOpen] = useState(false)
+  const [styleRefOpen, setStyleRefOpen] = useState(false)
   const [, tick] = useState(0)
   const dragIndexRef = useRef(null)
   const templates = getAllTemplates()
@@ -154,6 +156,14 @@ export default function Home() {
             onClick={handleExportMd}
           >
             导出模版
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setStyleRefOpen(true)}
+            title="常见游戏UI风格参考"
+          >
+            风格参考
           </button>
           <button
             type="button"
@@ -295,6 +305,10 @@ export default function Home() {
         key={quickParamsOpen ? 'open' : 'closed'}
         open={quickParamsOpen}
         onClose={() => setQuickParamsOpen(false)}
+      />
+      <StyleReferenceModal
+        open={styleRefOpen}
+        onClose={() => setStyleRefOpen(false)}
       />
     </div>
   )
