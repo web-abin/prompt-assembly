@@ -273,7 +273,7 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
 }
 
 .breadcrumb a {
-  color: var(--accent);
+  color: var(--text);
   text-decoration: none;
   font-weight: 500;
 }
@@ -799,7 +799,7 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
 
 .modal-title {
   font-size: 20px;
-  margin: 0 0 18px;
+  margin: 0;
 }
 
 .modal-body-input {
