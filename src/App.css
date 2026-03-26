@@ -4,6 +4,12 @@
   margin: 0 auto;
   text-align: left;
 }
+@media (max-width: 600px) {
+  .page {
+    padding: 14px 12px 36px;
+    max-width: 100%;
+  }
+}
 
 .page-header-actions {
   display: flex;
@@ -46,6 +52,12 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 28px;
+}
+@media (max-width: 600px) {
+  .page-header {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 }
 
 .page-title {
@@ -545,10 +557,26 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   --mall-card-width: 200px;
   --mall-gap: 14px;
 }
+@media (max-width: 900px) {
+  .mall-page {
+    --mall-card-width: 160px;
+  }
+}
+@media (max-width: 600px) {
+  .mall-page {
+    --mall-card-width: 44vw;
+    --mall-gap: 10px;
+  }
+}
 
 .mall-list-box {
   width: calc(4 * var(--mall-card-width) + 3 * var(--mall-gap));
   margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .mall-list-box {
+    width: auto;
+  }
 }
 
 .mall-list {
@@ -560,6 +588,16 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
 .mall-list .template-item {
   display: block;
   flex: 0 0 var(--mall-card-width);
+}
+@media (max-width: 600px) {
+  .mall-list .template-item {
+    flex: 0 0 calc(50% - var(--mall-gap));
+  }
+}
+@media (max-width: 400px) {
+  .mall-list .template-item {
+    flex: 0 0 100%;
+  }
 }
 .field-label-numbered {
   display: flex;
@@ -723,10 +761,23 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   cursor: pointer;
   border: 1px solid transparent;
 }
+@media (max-width: 600px) {
+  .btn {
+    padding: 8px 14px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+}
 
 .btn-sm {
   padding: 6px 12px;
   font-size: 14px;
+}
+@media (max-width: 600px) {
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
 }
 
 .btn-primary {
@@ -873,6 +924,15 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   cursor: pointer;
   animation: wobble 2.2s ease-in-out infinite;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+}
+@media (max-width: 900px) {
+  .gift-float {
+    top: auto;
+    bottom: 20px;
+    transform: none;
+    right: 12px;
+    width: 48px;
+  }
 }
 
 @keyframes wobble {
