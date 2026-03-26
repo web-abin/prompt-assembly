@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { styleList, categoryDict } from '../data/style'
 import { hasRedeemed } from '../lib/redeem'
 import RedeemModal from './RedeemModal'
+import { useToast } from '../context/ToastContext'
+import { copyTextToClipboard } from '../lib/copyText'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 function useFilteredStyles(open, q, categoryId) {
   return useMemo(() => {
@@ -57,6 +60,7 @@ function Highlight({ text, tokens }) {
 }
 
 export default function StyleReferenceModal({ open, onClose }) {
+  const { showToast } = useToast()
   const [q, setQ] = useState('')
   const [categoryKey, setCategoryKey] = useState('ALL')
   const [preview, setPreview] = useState(null)
@@ -73,8 +77,45 @@ export default function StyleReferenceModal({ open, onClose }) {
   const selectedCategoryId = categoryKey === 'ALL' ? 0 : categoryDict[categoryKey]?.id || 0
   const list = useFilteredStyles(open, q, selectedCategoryId)
 
-  const tokens = useMemo(() => (q.trim() ? q.trim().toLowerCase().split(/\s+/).filter(Boolean) : []), [q])
+  function imageSrcFor(item) {
+    const base = (import.meta.env?.BASE_URL || '/').replace(/\/+$/, '/')
+    return `${base}game-style/${item.img}`
+  }
 
+  function openRedeem(msg) {
+    setRedeemMsg(msg)
+    setRedeemOpen(true)
+  }
+
+  function switchPreview(step) {
+    if (!preview) return
+    const nextIndex = preview.index + step
+    if (nextIndex < 0 || nextIndex >= list.length) return
+    if (!redeemed && nextIndex >= 5) {
+      openRedeem('需要使用兑换码才能使用此功能')
+      return
+    }
+    const nextItem = list[nextIndex]
+    setPreview({
+      index: nextIndex,
+      src: imageSrcFor(nextItem),
+      title: nextItem.name,
+      features: nextItem.features,
+      example: nextItem.example,
+    })
+  }
+
+  const tokens = useMemo(() => (q.trim() ? q.trim().toLowerCase().split(/\s+/).filter(Boolean) : []), [q])
+  useEffect(() => {
+    if (!preview) return
+    function onKey(e) {
+      if (e.key === 'ArrowLeft') switchPreview(-1)
+      else if (e.key === 'ArrowRight') switchPreview(1)
+      else if (e.key === 'Escape') setPreview(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [preview])
   if (!open) return null
 
   function noise(seedStr = '', len = 80) {
@@ -87,11 +128,6 @@ export default function StyleReferenceModal({ open, onClose }) {
       s += pool[idx]
     }
     return s
-  }
-
-  function openRedeem(msg) {
-    setRedeemMsg(msg)
-    setRedeemOpen(true)
   }
 
   return (
@@ -155,15 +191,11 @@ export default function StyleReferenceModal({ open, onClose }) {
               const exampleText = locked ? noise(String(s.example || s.name || ''), 28) : `示例：${s.example}`
               const featuresText = locked ? noise(String(s.features || s.name || ''), 160) : s.features
               return (
-              <li key={s.id} style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg)', boxShadow: 'var(--shadow)' }}>
+              <li key={s.id} className="style-card" style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg)', boxShadow: 'var(--shadow)', position: 'relative' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '120px minmax(0, 1fr)', gap: 12, alignItems: 'stretch' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10 }}>
-                    {(() => {
-                      const base = (import.meta.env?.BASE_URL || '/').replace(/\/+$/, '/')
-                      const imgSrc = `${base}game-style/${s.img}`
-                      return (
                     <img
-                      src={imgSrc}
+                      src={imageSrcFor(s)}
                       alt={s.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)', cursor: locked ? 'not-allowed' : 'zoom-in', ...(locked ? { filter: 'blur(12px)', userSelect: 'none' } : null) }}
                       loading="lazy"
@@ -172,11 +204,9 @@ export default function StyleReferenceModal({ open, onClose }) {
                           openRedeem('需要使用兑换码才能使用此功能')
                           return
                         }
-                        setPreview({ src: imgSrc, title: s.name })
+                        setPreview({ index: idx, src: imageSrcFor(s), title: s.name, features: s.features, example: s.example })
                       }}
                     />
-                      )
-                    })()}
                   </div>
                   <div style={{ padding: '12px 12px 12px 0', minWidth: 0 }}>
                     <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 600, color: 'var(--text-h)', ...(locked ? { filter: 'blur(6px)', userSelect: 'none' } : null) }}>
@@ -201,6 +231,26 @@ export default function StyleReferenceModal({ open, onClose }) {
                     </div>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className="icon-btn style-card-copy-btn"
+                  aria-label={`复制「${s.name}」风格文案`}
+                  title="复制风格文案"
+                  onClick={async () => {
+                    if (locked) {
+                      openRedeem('需要使用兑换码才能使用此功能')
+                      return
+                    }
+                    const text = `${s.name}\n参考游戏：${s.example}\n风格描述：${s.features}`
+                    await copyTextToClipboard(text)
+                    showToast('已复制风格文案')
+                  }}
+                >
+                  <svg className="icon-btn-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
               </li>
             )})}
           </ul>
@@ -239,16 +289,17 @@ export default function StyleReferenceModal({ open, onClose }) {
                 borderRadius: 12,
                 boxShadow: 'var(--shadow)',
                 padding: 12,
-                maxWidth: 'min(92vw, 900px)'
+                maxWidth: 'min(96vw, 1200px)'
               }}
             >
               <img
                 src={preview.src}
                 alt={preview.title || '预览图片'}
                 style={{
+                  minWidth: '500px',
                   width: '100%',
                   height: 'auto',
-                  maxHeight: '78vh',
+                  maxHeight: '74vh',
                   objectFit: 'contain',
                   borderRadius: 10,
                   border: '1px solid var(--border)'
@@ -256,9 +307,47 @@ export default function StyleReferenceModal({ open, onClose }) {
               />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%' }}>
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-h)' }}>{preview.title}</p>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPreview(null)}>
-                  关闭预览
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => switchPreview(-1)}
+                    disabled={!preview || preview.index <= 0}
+                    aria-label="上一张"
+                    title="上一张"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => switchPreview(1)}
+                    disabled={!preview || preview.index >= list.length - 1}
+                    aria-label="下一张"
+                    title="下一张"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setPreview(null)}
+                    aria-label="关闭预览"
+                    title="关闭预览"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+              <div style={{ width: '100%', marginTop: 6 }}>
+                {preview.example ? (
+                  <p style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--text)' }}>参考游戏：{preview.example}</p>
+                ) : null}
+                {preview.features ? (
+                  <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-h)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    风格描述：{preview.features}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
