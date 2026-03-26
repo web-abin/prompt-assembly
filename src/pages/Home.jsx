@@ -15,6 +15,7 @@ import StyleReferenceModal from '../components/StyleReferenceModal'
 import RedeemModal from '../components/RedeemModal'
 import giftUrl from '../assets/gift.png'
 import iconMall from '../assets/icon-mall.png'
+import iconGame from '../assets/icon-game.png'
 
 const PREVIEW_LINES = 4
 
@@ -144,7 +145,10 @@ export default function Home() {
     <div className="page home-page">
       <header className="page-header">
         <div>
-          <h1 className="page-title">Prompt 拼接</h1>
+          <div className="page-title">
+            <h1>AI造物</h1>
+            <span className="page-tag">Prompt拼接</span>
+          </div>
           <p className="page-sub">
             本地保存模版，填写占位符并一键复制组装结果。
           </p>
@@ -169,11 +173,12 @@ export default function Home() {
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-game"
             onClick={() => setStyleRefOpen(true)}
             title="常见游戏UI风格参考"
           >
-            风格参考
+            <img src={iconGame} alt="" />
+            游戏风格
           </button>
           <button
             type="button"

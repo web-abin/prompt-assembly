@@ -1,5 +1,6 @@
 :root,
 html[data-theme='light'] {
+  --text-h1: #000;
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -20,6 +21,7 @@ html[data-theme='light'] {
 }
 
 html[data-theme='dark'] {
+  --text-h1: #fff;
   --text: #9ca3af;
   --text-h: #f3f4f6;
   --bg: #16171d;

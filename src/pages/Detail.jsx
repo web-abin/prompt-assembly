@@ -4,11 +4,13 @@ import { getTemplate } from '../lib/storage'
 import {
   extractPlaceholders,
   assemblePrompt,
-  getTemplateDisplaySegments,
+  getTemplateDisplaySegments
 } from '../lib/parsePrompt'
 import ThemeToggle from '../components/ThemeToggle'
 import QuickParamsPickerModal from '../components/QuickParamsPickerModal'
 import { useToast } from '../context/ToastContext'
+import StyleReferenceModal from '../components/StyleReferenceModal'
+import iconGame from '../assets/icon-game.png'
 
 function QuickFillIcon() {
   return (
@@ -21,12 +23,60 @@ function QuickFillIcon() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line
+        x1="8"
+        y1="6"
+        x2="21"
+        y2="6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="8"
+        y1="12"
+        x2="21"
+        y2="12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="8"
+        y1="18"
+        x2="21"
+        y2="18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="3"
+        y1="6"
+        x2="3.01"
+        y2="6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="3"
+        y1="12"
+        x2="3.01"
+        y2="12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="3"
+        y1="18"
+        x2="3.01"
+        y2="18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
@@ -63,7 +113,7 @@ function TemplateBlock({ body }) {
                   <span className="ph-badge">{seg.keyIndex}</span>
                   <span className="ph-brackets">[{seg.key}]</span>
                 </span>
-              ),
+              )
             )
           )}
         </div>
@@ -78,6 +128,7 @@ export default function Detail() {
   const tpl = useMemo(() => getTemplate(id), [id])
   const [values, setValues] = useState({})
   const [quickPickerKey, setQuickPickerKey] = useState(null)
+  const [styleRefOpen, setStyleRefOpen] = useState(false)
   const outputRef = useRef(null)
 
   const keys = useMemo(() => (tpl ? extractPlaceholders(tpl.body) : []), [tpl])
@@ -121,7 +172,18 @@ export default function Detail() {
         <div className="detail-main">
           <nav className="breadcrumb breadcrumb-bar">
             <Link to="/">← 模版列表</Link>
-            <ThemeToggle />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <button
+                type="button"
+              className="btn btn-secondary btn-sm btn-game"
+                onClick={() => setStyleRefOpen(true)}
+                title="常见游戏UI风格参考"
+              >
+              <img src={iconGame} alt="" />
+              游戏风格
+              </button>
+              <ThemeToggle />
+            </div>
           </nav>
 
           <TemplateBlock body={tpl.body} />
@@ -129,7 +191,9 @@ export default function Detail() {
           <section className="form-section">
             <h2 className="section-title">填写占位符</h2>
             {keys.length === 0 ? (
-              <p className="muted">本模版没有 [占位符]，可直接在右侧编辑全文。</p>
+              <p className="muted">
+                本模版没有 [占位符]，可直接在右侧编辑全文。
+              </p>
             ) : (
               <div className="placeholder-form">
                 {keys.map((key, i) => (
@@ -140,7 +204,10 @@ export default function Detail() {
                         htmlFor={`ph-${key}`}
                         aria-label={`第 ${i + 1} 项：${key}`}
                       >
-                        <span className="placeholder-form-num" aria-hidden="true">
+                        <span
+                          className="placeholder-form-num"
+                          aria-hidden="true"
+                        >
                           {i + 1}
                         </span>
                         <span className="placeholder-form-key">{key}</span>
@@ -173,7 +240,11 @@ export default function Detail() {
         <aside className="detail-aside detail-aside-fill">
           <div className="aside-header">
             <h2 className="section-title">组装结果</h2>
-            <button type="button" className="btn btn-primary btn-sm" onClick={handleCopy}>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleCopy}
+            >
               复制
             </button>
           </div>
@@ -185,7 +256,9 @@ export default function Detail() {
             spellCheck={false}
             placeholder="填写左侧或在此直接编辑…"
           />
-          <p className="aside-hint">修改上方表单会重新拼接；也可在本框内编辑后再复制。</p>
+          <p className="aside-hint">
+            修改上方表单会重新拼接；也可在本框内编辑后再复制。
+          </p>
         </aside>
       </div>
 
@@ -195,6 +268,10 @@ export default function Detail() {
         onSelect={(content) => {
           if (quickPickerKey) setField(quickPickerKey, content)
         }}
+      />
+      <StyleReferenceModal
+        open={styleRefOpen}
+        onClose={() => setStyleRefOpen(false)}
       />
     </div>
   )
