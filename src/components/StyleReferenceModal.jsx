@@ -192,12 +192,13 @@ export default function StyleReferenceModal({ open, onClose }) {
               const featuresText = locked ? noise(String(s.features || s.name || ''), 160) : s.features
               return (
               <li key={s.id} className="style-card" style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg)', boxShadow: 'var(--shadow)', position: 'relative' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '120px minmax(0, 1fr)', gap: 12, alignItems: 'stretch' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10 }}>
+                <div className="style-card-grid">
+                  <div className="style-card-thumb">
                     <img
                       src={imageSrcFor(s)}
                       alt={s.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)', cursor: locked ? 'not-allowed' : 'zoom-in', ...(locked ? { filter: 'blur(12px)', userSelect: 'none' } : null) }}
+                      className="style-card-img"
+                      style={{ cursor: locked ? 'not-allowed' : 'zoom-in', ...(locked ? { filter: 'blur(12px)', userSelect: 'none' } : null) }}
                       loading="lazy"
                       onClick={() => {
                         if (locked) {
@@ -208,14 +209,14 @@ export default function StyleReferenceModal({ open, onClose }) {
                       }}
                     />
                   </div>
-                  <div style={{ padding: '12px 12px 12px 0', minWidth: 0 }}>
+                  <div className="style-card-content">
                     <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 600, color: 'var(--text-h)', ...(locked ? { filter: 'blur(6px)', userSelect: 'none' } : null) }}>
                       {locked ? titleText : <Highlight text={s.name} tokens={tokens} />}
                     </h3>
                     <p style={{ margin: '0 0 8px', fontSize: 13, color: 'var(--text)', ...(locked ? { filter: 'blur(6px)', userSelect: 'none' } : null) }}>
                       {exampleText}
                     </p>
-                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-h)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', ...(locked ? { filter: 'blur(6px)', userSelect: 'none' } : null) }}>
+                    <p className="style-features" style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-h)', whiteSpace: 'pre-wrap', ...(locked ? { filter: 'blur(6px)', userSelect: 'none' } : null) }}>
                       {locked ? featuresText : <Highlight text={s.features} tokens={tokens} />}
                     </p>
                     <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -295,15 +296,7 @@ export default function StyleReferenceModal({ open, onClose }) {
               <img
                 src={preview.src}
                 alt={preview.title || '预览图片'}
-                style={{
-                  minWidth: '500px',
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: '74vh',
-                  objectFit: 'contain',
-                  borderRadius: 10,
-                  border: '1px solid var(--border)'
-                }}
+                className="style-preview-img"
               />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%' }}>
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-h)' }}>{preview.title}</p>
@@ -344,7 +337,7 @@ export default function StyleReferenceModal({ open, onClose }) {
                   <p style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--text)' }}>参考游戏：{preview.example}</p>
                 ) : null}
                 {preview.features ? (
-                  <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-h)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  <p className="style-preview-features" style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-h)', whiteSpace: 'pre-wrap' }}>
                     风格描述：{preview.features}
                   </p>
                 ) : null}

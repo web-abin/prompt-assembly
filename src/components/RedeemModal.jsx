@@ -45,7 +45,7 @@ export default function RedeemModal({ open, onClose, onRedeemed, message }) {
         <p className="redeem-tip">{message || '使用兑换码可解锁更多功能'}</p>
         <div className="redeem-qrcode">
           <img src={qrcodeUrl} alt="公众号二维码" className="redeem-qrcode-img" />
-          <div className="redeem-qrcode-caption">关注公众号，免费领取兑换码</div>
+          <div className="redeem-qrcode-caption">关注公众号，发送“兑换码”获取兑换码</div>
         </div>
         <label className="field-label" htmlFor="redeem-input">输入兑换码</label>
         <input
