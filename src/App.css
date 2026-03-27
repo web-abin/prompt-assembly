@@ -903,7 +903,7 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
 }
 .redeem-qrcode-img {
   width: min(220px, 100%);
-  height: auto;
+  aspect-ratio: 1 / 1;
   border-radius: 8px;
   border: 1px solid var(--border);
 }
