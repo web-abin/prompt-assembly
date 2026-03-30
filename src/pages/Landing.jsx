@@ -30,12 +30,30 @@ export default function Landing() {
       desc: '多张图片快速合成 SpriteSheet 并导出通用 JSON',
       href: `${base}spritesheet.html`
     },
+    // {
+    //   key: 'remove',
+    //   title: '去背景/去水印',
+    //   desc: '轻量图像处理，快速去除背景或模糊覆盖水印',
+    //   href: `${base}remove-watermark.html`
+    // },
+    // {
+    //   key: 'gif',
+    //   title: 'GIF 合成与拆分',
+    //   desc: '多图合成 GIF，或将 GIF 拆成序列帧导出',
+    //   href: `${base}gif-tool.html`
+    // },
     {
-      key: 'remove',
-      title: '去背景/去水印',
-      desc: '轻量图像处理，快速去除背景或模糊覆盖水印',
-      href: `${base}remove-watermark.html`
-    }
+      key: 'batch-resize',
+      title: '图片批量改尺寸',
+      desc: '指定统一宽度，批量缩放多张图片并预览',
+      href: `${base}batch-resize.html`
+    },
+    // {
+    //   key: 'image-compress',
+    //   title: '图片压缩',
+    //   desc: '可调压缩质量，支持批量处理与预览',
+    //   href: `${base}image-compress.html`
+    // }
   ]
 
   return (
