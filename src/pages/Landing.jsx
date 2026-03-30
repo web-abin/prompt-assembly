@@ -80,7 +80,7 @@ export default function Landing() {
           </Link>
           <span className="nav-with-qrcode">
             <a className="nav-link" href={`${base}spritesheet.html`}>
-              🎁 关注公众号
+              🎁 免费领取提示词大全
             </a>
             <div className="nav-qrcode-popover" role="tooltip">
               <img
@@ -90,7 +90,7 @@ export default function Landing() {
                 width={200}
                 height={200}
               />
-              <p className="nav-qrcode-popover-caption">扫码关注公众号</p>
+              <p className="nav-qrcode-popover-caption">扫码关注公众号，发送“生图提示词”获取Nano、即梦等提示词大全</p>
             </div>
           </span>
         </nav>
