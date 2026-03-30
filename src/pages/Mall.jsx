@@ -84,7 +84,7 @@ export default function Mall() {
         </div>
         <div className="page-header-actions">
           <ThemeToggle />
-          <Link className="btn btn-secondary" to="/" title="返回我的模版列表">
+          <Link className="btn btn-secondary" to="/prompts" title="返回我的模版列表">
             返回首页
           </Link>
         </div>

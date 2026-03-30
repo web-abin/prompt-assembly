@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>图片去背景 & 去水印工具</title>
+<script src="https://cdn.jsdelivr.net/npm/opencv-js@4.10.0/dist/opencv.min.js"></script>
+<style>
+*{box-sizing:border-box;font-family:system-ui,sans-serif}
+body{max-width:900px;margin:20px auto;padding:0 20px;background:#f4f7fa}
+.card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+h2{margin-top:0;color:#222}
+.area{margin:16px 0}
+label{display:block;margin-bottom:6px;font-weight:500}
+input,button,select{padding:10px 14px;border-radius:8px;border:1px solid #ddd;width:100%}
+button{background:#4285f4;color:white;border:none;cursor:pointer}
+#download{background:#0f9d58;margin-top:10px;display:none}
+.preview{display:flex;gap:20px;flex-wrap:wrap;margin:20px 0}
+.box{flex:1;min-width:280px}
+.box h4{margin-top:0}
+.img-box{border:1px dashed #ccc;padding:10px;border-radius:8px;min-height:200px;display:flex;align-items:center;justify-content:center;background:#fafafa}
+.img-box img{max-width:100%;max-height:300px}
+.toggle{display:flex;align-items:center;gap:10px}
+.toggle input{width:auto}
+.param{display:flex;align-items:center;gap:10px;margin:6px 0}
+.param input{flex:1}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>图片去背景 & 去水印工具（纯前端）</h2>
+
+  <div class="area">
+    <label>选择图片</label>
+    <input type="file" id="file" accept="image/*">
+  </div>
+
+  <div class="toggle area">
+    <input type="checkbox" id="removeWatermark" checked>
+    <label>开启去水印（默认开启）</label>
+  </div>
+
+  <div class="area">
+    <label>背景去除阈值（值越小越透明）</label>
+    <input type="range" id="threshold" min="0" max="255" value="30">
+  </div>
+
+  <div class="area">
+    <label>模糊平滑（去噪）</label>
+    <input type="range" id="blur" min="0" max="20" value="2">
+  </div>
+
+  <div class="area">
+    <label>水印淡化强度</label>
+    <input type="range" id="watermarkStrength" min="0" max="100" value="50">
+  </div>
+
+  <button id="process">开始处理</button>
+  <button id="download">下载透明PNG</button>
+
+  <div class="preview">
+    <div class="box">
+      <h4>原图</h4>
+      <div class="img-box" id="originBox"></div>
+    </div>
+    <div class="box">
+      <h4>处理后（透明）</h4>
+      <div class="img-box" id="resultBox"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let srcImg = null;
+let resultUrl = '';
+
+function showImage(el, img) {
+  el.innerHTML = '';
+  const i = document.createElement('img');
+  i.src = img;
+  el.appendChild(i);
+}
+
+document.getElementById('file').onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const url = URL.createObjectURL(f);
+  srcImg = url;
+  showImage(document.getElementById('originBox'), url);
+};
+
+document.getElementById('process').onclick = () => {
+  if(!srcImg) return alert('请选择图片');
+  processImage();
+};
+
+function processImage() {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+
+    const threshold = parseInt(document.getElementById('threshold').value);
+    const blurSize = parseInt(document.getElementById('blur').value);
+    const watermarkOn = document.getElementById('removeWatermark').checked;
+    const watermarkStrength = parseInt(document.getElementById('watermarkStrength').value) / 100;
+
+    cv['onRuntimeInitialized'] = () => {
+      let src = cv.imread(canvas);
+      let dst = new cv.Mat();
+
+      // 转透明
+      cv.cvtColor(src, src, cv.COLOR_RGBA2RGB, 0);
+      cv.cvtColor(src, dst, cv.COLOR_RGB2RGBA);
+
+      const data = dst.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        const gray = (r + g + b) / 3;
+
+        // 去背景：接近白色变透明
+        if (gray > 255 - threshold) {
+          data[i+3] = 0;
+        }
+
+        // 去水印：降低浅色区域饱和度
+        if (watermarkOn && gray > 200 && data[i+3] !== 0) {
+          const f = 1 - watermarkStrength;
+          data[i] = 255 * (1 - f) + r * f | 0;
+          data[i+1] = 255 * (1 - f) + g * f | 0;
+          data[i+2] = 255 * (1 - f) + b * f | 0;
+        }
+      }
+
+      // 模糊平滑
+      if (blurSize > 0) {
+        let blurMat = new cv.Mat();
+        let ksize = new cv.Size(blurSize | 1, blurSize | 1);
+        cv.GaussianBlur(dst, blurMat, ksize, 0, 0, cv.BORDER_DEFAULT);
+        blurMat.copyTo(dst);
+        blurMat.delete();
+      }
+
+      cv.imshow(canvas, dst);
+      resultUrl = canvas.toDataURL('image/png');
+      showImage(document.getElementById('resultBox'), resultUrl);
+      document.getElementById('download').style.display = 'block';
+
+      src.delete();
+      dst.delete();
+    };
+  };
+  img.src = srcImg;
+}
+
+document.getElementById('download').onclick = () => {
+  if(!resultUrl) return;
+  const a = document.createElement('a');
+  a.href = resultUrl;
+  a.download = 'transparent.png';
+  a.click();
+};
+</script>
+</body>
+</html>

@@ -146,7 +146,9 @@ export default function Home() {
       <header className="page-header">
         <div>
           <div className="page-title">
-            <h1>AI造物</h1>
+            <Link to="/">
+              <h1>快出图</h1>
+            </Link>
             <span className="page-tag">Prompt拼接</span>
           </div>
           <p className="page-sub">
@@ -343,6 +345,13 @@ export default function Home() {
         onRedeemed={() => showToast('兑换成功')}
         message="使用兑换码才能享受更多权益"
       />
+
+      <footer className="landing-footer">
+        <p>
+          © AI造物 · 快出图 | 2026.03.10 | 保留所有权利 |
+          联系我们：wellxabin@gmail.com
+        </p>
+      </footer>
     </div>
   )
 }
