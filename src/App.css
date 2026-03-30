@@ -2029,6 +2029,30 @@ html.dark .tool-panel {
   border: 1px dashed var(--border);
   background: var(--code-bg);
 }
+.tool-follow-hint {
+  margin-top: 24px;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.12),
+    rgba(22, 163, 74, 0.1)
+  );
+}
+html.dark .tool-follow-hint {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.18),
+    rgba(22, 163, 74, 0.12)
+  );
+}
+.tool-gif-result-preview {
+  max-height: 200px;
+  width: auto;
+}
 @media (max-width: 600px) {
   .tool-btn-row {
     flex-direction: column;
@@ -2038,4 +2062,11 @@ html.dark .tool-panel {
   .tool-btn-secondary {
     width: 100%;
   }
+}
+
+.route-suspense-fallback {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text);
+  font-size: 14px;
 }
