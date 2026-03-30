@@ -1,13 +1,27 @@
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import logoUrl from '../assets/icon/logo.svg'
 import qrcodeUrl from '../assets/qrcode.png'
+import FollowQrcodeModal from './FollowQrcodeModal'
+
+const MOBILE_MAX_CSS = '(max-width: 640px)'
 
 /**
  * @param {{ variant?: 'full' | 'simple' }} props
  * full：与首页一致（关于 + 提示词领取）；simple：关于页用「返回首页」
  */
 export default function LandingHeader({ variant = 'full' }) {
+  const [followModalOpen, setFollowModalOpen] = useState(false)
+
+  const handlePromptLinkClick = useCallback((e) => {
+    if (typeof window !== 'undefined' && window.matchMedia(MOBILE_MAX_CSS).matches) {
+      e.preventDefault()
+      setFollowModalOpen(true)
+    }
+  }, [])
+
   return (
+    <>
     <header className="landing-header">
       <Link to="/" className="brand brand-link">
         <div className="logo">
@@ -29,7 +43,11 @@ export default function LandingHeader({ variant = 'full' }) {
               关于/商务合作
             </Link>
             <span className="nav-with-qrcode">
-              <Link className="nav-link" to="/spritesheet">
+              <Link
+                className="nav-link"
+                to="/spritesheet"
+                onClick={handlePromptLinkClick}
+              >
                 🎁 免费领取提示词大全
               </Link>
               <div className="nav-qrcode-popover" role="tooltip">
@@ -49,5 +67,12 @@ export default function LandingHeader({ variant = 'full' }) {
         )}
       </nav>
     </header>
+    {variant === 'full' && (
+      <FollowQrcodeModal
+        open={followModalOpen}
+        onClose={() => setFollowModalOpen(false)}
+      />
+    )}
+    </>
   )
 }

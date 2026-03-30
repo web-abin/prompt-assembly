@@ -1,16 +1,76 @@
-# React + Vite
+2026年了，如果你还在手动写训练脚本、盯着 Loss 曲线，那真要掉队了。现在有一套颠覆级“黑科技”组合介绍给你。
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 序言：程序员的“炼丹”梦，AI 终于帮你实现
 
-Currently, two official plugins are available:
+过去一年，我们习惯用 Cursor 写代码、用 Claude Code 跑测试。但你是否想过，模型训练也能直接甩给 AI 代理，全自动完成？
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+最近，Hugging Face 推出重磅更新：接入 Codex（OpenAI 编码代理）+ 全新 HF Skills 库，正式迈入“自动驾驶微调”新纪元。
 
-## React Compiler
+作为一名前端 AI 驱动开发者，看完我的第一反应是：以后也许不用再“写代码”，而是“调教 AI 代理去训练更强的 AI”！
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 1. 什么是 Codex + HF Skills？
 
-## Expanding the ESLint configuration
+简单说，Hugging Face 给 Codex 配好了一套“专业技能包”(详见 `AGENTS.md`)。
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+<details>
+<summary>传统微调流程</summary>
+
+找数据集 → 手动洗数据 → 写训练脚本 → 租 GPU → 熬夜盯进度 → 转格式 GGUF
+</details>
+
+现在，只需对 Codex 说句：
+
+“帮我用 open-r1 数据集微调 Qwen3，让它变强，顺便出份实验报告。”
+
+剩下全自动，脏活累活都由 Codex + HF Skills 搞定。
+
+### 自动化优势亮点
+
+- 自动配硬件：0.6B 小模型自动选 T4，7B 大模型自动申 A100，估算钱包余额
+- 数据格式自检纠错：JSON 格式自动预处理
+- 智能监控决策：内置 Trackio，能看懂训练曲线，发现异常主动建议停止或调节 lr
+- 一键 GGUF：训练完自动出 Q4_K_M，自动上传 Hub，本地随时可用
+
+## 2. 实战演练：一行指令开启“自动炼丹”
+
+比如你要训练一个专解 LeetCode 编程题的小模型，全流程非常丝滑：
+
+### 步骤 1. 环境初始化
+
+克隆 Skills 库并配置 MCP 服务（模型上下文协议），让 Codex 拥有 Hugging Face 的核心权限。
+
+```bash
+git clone https://github.com/huggingface/skills.git
+hf auth login
+```
+
+### 步骤 2. 下达指令
+
+在项目目录下，像吩咐实习生一样发指令：
+
+“启动 SFT 微调实验。目标：提升模型解题能力。用 open-r1 数据集，评估用 HumanEval 跑分，实时产出实验报告。”
+
+### 步骤 3. 等待结果
+
+Codex 会在 `training_reports/` 里生成 Markdown 报告，自动实时更新：
+
+- 状态：训练中...
+- 当前 Loss：0.23
+- 预期成本：$0.30（视硬件浮动）
+- 跑分对比：原始 30.4% → 微调后 34.2%（提升一目了然！）
+
+## 3. 为什么这件事很重要？
+
+作为 “AI 造物进化” 的读者，我们不该只满足调用 API，还要能定制自己的小模型。
+
+1. 成本降维：小模型全流程自动化训练只需几元钱，非常适合开发垂直“小工具”（如视力测试、解谜游戏）。
+2. 工程闭环：以前只有算法岗能玩，现在工程师也能拥有定制模型。Codex 代理让前端可以“私人炼丹”。
+3. 效率革命：以前一天只能盯一组实验，现在一句话交办，第二天自动产出报告。
+
+## 总结
+
+2026 技术大势明确，Agentic Workflow（代理工作流）正在替代传统开发。从写代码到炼模型，AI 代理正在接管重复逻辑。如果你还在手调参数、手改数据集格式，Codex + Hugging Face 这个组合绝对值得一试。
+
+好东西是磨出来的，现在我们有了超级“自动磨机”。
+
+想知道怎么训练只属于你场景的“微型推理模型”？欢迎留言，下期直接分享实战代码与经验。
