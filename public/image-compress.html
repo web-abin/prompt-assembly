@@ -2,75 +2,150 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>图片压缩 - 在线工具</title>
+<title>图片压缩 - AI造物进化</title>
 <style>
-*{box-sizing:border-box;font-family:system-ui,sans-serif}
-body{max-width:700px;margin:30px auto;padding:0 20px;background:#f7f9fa}
-.card{background:#fff;padding:24px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.06)}
-h2{margin-top:0;color:#333}
-.area{margin:16px 0}
-label{display:block;margin-bottom:8px;font-weight:500}
-input,button{padding:10px 14px;border-radius:8px;border:1px solid #ddd;width:100%}
-button{background:#4e82f1;color:#fff;border:none;cursor:pointer;margin-top:6px}
-.preview{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.preview img{height:60px;border-radius:6px}
-.follow{background:#e8f4ff;padding:14px;border-radius:8px;color:#0d47a1;margin-top:20px;text-align:center}
-.back-home{margin:0 0 16px}
-.back-home a{display:inline-block;padding:8px 14px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#2563eb;text-decoration:none;font-size:14px;font-weight:500}
-.back-home a:hover{background:#eff6ff}
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { max-width: 800px; margin: 30px auto; padding: 0 20px; background: #f0f2f5; }
+    .card { background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .area { margin: 18px 0; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+    input[type="file"] { padding: 15px; border: 2px dashed #ddd; width: 100%; border-radius: 10px; cursor: pointer; background: #fafafa; }
+    button { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    #startBtn { background: #4e82f1; color: #fff; width: 100%; font-size: 16px; }
+    #startBtn:hover { background: #3b6cd4; }
+    #startBtn:disabled { background: #ccc; cursor: not-allowed; }
+    
+    /* 预览列表样式 */
+    .preview-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
+    .item { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 10px; text-align: center; display: flex; flex-direction: column; gap: 8px; }
+    .item img { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; background: #f9f9f9; }
+    .item span { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dl-btn { background: #f0f7ff; color: #0070f3; font-size: 12px; padding: 6px; border: 1px solid #d0e3ff; }
+    .dl-btn:hover { background: #e0efff; }
+
+    /* 底部全局操作 */
+    .actions { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
+    #zipBtn { background: #059669; color: white; padding: 12px 30px; }
+    
+    #status { font-size: 13px; color: #666; margin-top: 10px; text-align: center; min-height: 1.5em; }
 </style>
 </head>
 <body>
-<div class="back-home"><a href="index.html#/">← 返回首页</a></div>
+
 <div class="card">
-  <h2>图片压缩 在线工具</h2>
+    <h2>图片压缩工具 <small style="font-weight: normal; color: #999; font-size: 14px;">(支持 ZIP 打包)</small></h2>
 
-  <div class="area">
-    <label>压缩质量（10-100）</label>
-    <input type="range" id="quality" min="10" max="100" value="80">
-  </div>
+    <div class="area">
+        <label>压缩质量：<span id="q-val">80</span>%</label>
+        <input type="range" id="quality" min="10" max="100" value="80" style="width: 100%;">
+    </div>
 
-  <div class="area">
-    <label>选择图片（可批量）</label>
-    <input type="file" id="file" accept="image/*" multiple>
-  </div>
+    <div class="area">
+        <label>选择图片</label>
+        <input type="file" id="file" accept="image/*" multiple>
+    </div>
 
-  <button id="start">开始压缩</button>
+    <button id="startBtn">开始处理</button>
+    <div id="status"></div>
 
-  <div id="preview" class="preview"></div>
+    <div id="previewList" class="preview-list"></div>
 
-  <div class="follow">
-    🎁 关注公众号，回复【压缩】获取<br>高清批量压缩工具
-  </div>
+    <div class="actions" id="globalActions">
+        <button id="zipBtn">📦 一键打包下载全部 (ZIP)</button>
+    </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.11.0/dist/browser-image-compression.min.js"></script>
-<script>
-const start = document.getElementById('start');
-const preview = document.getElementById('preview');
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
-start.onclick = async () => {
-  const files = Array.from(document.getElementById('file').files);
-  const quality = document.getElementById('quality').value / 100;
-  if (files.length === 0) return alert('请选择图片');
-  
-  preview.innerHTML = '';
-  for (const f of files) {
-    const compressed = await imageCompression(f, {
-      maxSizeMB: 1,
-      quality: quality
-    });
-    const url = URL.createObjectURL(compressed);
-    const img = new Image();
-    img.src = url;
-    preview.appendChild(img);
+<script>
+    const startBtn = document.getElementById('startBtn');
+    const zipBtn = document.getElementById('zipBtn');
+    const previewList = document.getElementById('previewList');
+    const status = document.getElementById('status');
+    const globalActions = document.getElementById('globalActions');
     
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'compressed-' + f.name;
-    a.click();
-  }
-};
+    let processedFiles = []; // 存储处理后的 blob 和文件名
+
+    document.getElementById('quality').oninput = (e) => document.getElementById('q-val').innerText = e.target.value;
+
+    startBtn.onclick = async () => {
+        const files = Array.from(document.getElementById('file').files);
+        if (files.length === 0) return alert('请选择图片');
+
+        // 初始化状态
+        startBtn.disabled = true;
+        previewList.innerHTML = '';
+        processedFiles = [];
+        globalActions.style.display = 'none';
+        const quality = parseInt(document.getElementById('quality').value) / 100;
+
+        for (let i = 0; i < files.length; i++) {
+            const f = files[i];
+            status.innerText = `正在压缩: ${i + 1}/${files.length}`;
+
+            try {
+                const options = {
+                    maxSizeMB: 1,
+                    initialQuality: quality,
+                    useWebWorker: true
+                };
+
+                const compressedBlob = await imageCompression(f, options);
+                const url = URL.createObjectURL(compressedBlob);
+                
+                // 保存数据供 ZIP 使用
+                processedFiles.push({ blob: compressedBlob, name: `compressed_${f.name}` });
+
+                // 创建预览卡片
+                const item = document.createElement('div');
+                item.className = 'item';
+                item.innerHTML = `
+                    <img src="${url}">
+                    <span>${f.name}</span>
+                    <button class="dl-btn" onclick="downloadSingle('${url}', 'compressed_${f.name}')">下载单图</button>
+                `;
+                previewList.appendChild(item);
+
+            } catch (e) {
+                console.error("压缩失败", e);
+            }
+        }
+
+        status.innerText = '✅ 处理完成';
+        startBtn.disabled = false;
+        if (processedFiles.length > 0) {
+            globalActions.style.display = 'block';
+        }
+    };
+
+    // 下载单张图片
+    function downloadSingle(url, filename) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+    }
+
+    // 打包下载 ZIP
+    zipBtn.onclick = async () => {
+        const zip = new JSZip();
+        status.innerText = '正在生成压缩包...';
+        
+        processedFiles.forEach(file => {
+            zip.file(file.name, file.blob);
+        });
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const zipUrl = URL.createObjectURL(content);
+        
+        const a = document.createElement('a');
+        a.href = zipUrl;
+        a.download = `images_package_${Date.now()}.zip`;
+        a.click();
+        status.innerText = '✅ 打包下载成功';
+    };
 </script>
+
 </body>
 </html>
