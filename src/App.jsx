@@ -10,9 +10,11 @@ import About from './pages/About'
 import BatchResize from './pages/BatchResize'
 import SequenceFrame from './pages/SequenceFrame'
 import Spritesheet from './pages/Spritesheet'
+import RemoveBackground from './pages/RemoveBackground'
 import './App.css'
 
 const GifTool = lazy(() => import('./pages/GifTool'))
+const ImageCompress = lazy(() => import('./pages/ImageCompress'))
 
 function DetailRoute() {
   const { id } = useParams()
@@ -28,6 +30,7 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/about" element={<About />} />
             <Route path="/batch-resize" element={<BatchResize />} />
+            <Route path="/remove-background" element={<RemoveBackground />} />
             <Route path="/sequence-frame" element={<SequenceFrame />} />
             <Route path="/spritesheet" element={<Spritesheet />} />
             <Route
@@ -35,6 +38,14 @@ export default function App() {
               element={
                 <Suspense fallback={<div className="route-suspense-fallback">加载中…</div>}>
                   <GifTool />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/image-compress"
+              element={
+                <Suspense fallback={<div className="route-suspense-fallback">加载中…</div>}>
+                  <ImageCompress />
                 </Suspense>
               }
             />

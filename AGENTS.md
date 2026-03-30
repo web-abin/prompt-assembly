@@ -39,3 +39,8 @@
 ## 验证
 - 本地：npm run build 后检查 dist（或 docs）目录结构。
 - 线上：打开 https://web-abin.github.io/prompt-assembly/，查看页面是否加载 dist/docs 下的 assets，而非 /src/main.jsx。
+
+## 页面样式约定
+- 各功能页的样式应做**局部隔离**，避免继续把大量页面专用样式堆进 `App.css` / `index.css` 等全局样式表。
+- 推荐做法：为该页建立 `*.module.css`（CSS Modules），在页面组件根节点挂载模块根 class，仅在该文件内书写该页布局与皮肤；与全局的交互仅限于必要的布局容器（如 `ToolPageLayout`）。
+- 需要复用多块页面时再抽取**共享**片段或变量，而不是默认写全局。

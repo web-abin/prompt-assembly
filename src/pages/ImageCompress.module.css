@@ -1,0 +1,208 @@
+/* 本页样式与全局隔离，仅作用于 ImageCompress 根节点内 */
+.root {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 0 20px;
+  background: #f0f2f5;
+  color: #333;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  margin-top: 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subtitle {
+  font-weight: normal;
+  color: #999;
+  font-size: 14px;
+}
+
+.area {
+  margin: 18px 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #444;
+}
+
+.qRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rangeInput {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+}
+
+.fileInput {
+  padding: 15px;
+  border: 2px dashed #ddd;
+  width: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #fafafa;
+  font: inherit;
+}
+
+.startBtn {
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  background: #4e82f1;
+  color: #fff;
+  width: 100%;
+  font-size: 16px;
+}
+
+.startBtn:hover:not(:disabled) {
+  background: #3b6cd4;
+}
+
+.startBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.status {
+  font-size: 13px;
+  color: #666;
+  margin-top: 10px;
+  text-align: center;
+  min-height: 1.5em;
+}
+
+.previewList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.item {
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itemImg {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+.itemName {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dlBtn {
+  background: #f0f7ff;
+  color: #0070f3;
+  font-size: 12px;
+  padding: 6px;
+  border: 1px solid #d0e3ff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.dlBtn:hover {
+  background: #e0efff;
+}
+
+.actions {
+  display: none;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.actionsVisible {
+  display: block;
+}
+
+.zipBtn {
+  background: #059669;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.zipBtn:hover:not(:disabled) {
+  background: #047857;
+}
+
+.zipBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@media (max-width: 640px) {
+  .root {
+    margin: 16px auto;
+    padding: 0 12px;
+  }
+
+  .card {
+    padding: 18px 14px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .previewList {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .itemImg {
+    height: 88px;
+  }
+}

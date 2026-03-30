@@ -39,6 +39,18 @@ export default function Landing() {
       title: 'GIF 合成与拆分',
       desc: '多图合成 GIF、或拆分 GIF 为逐帧预览',
       to: '/gif-tool'
+    },
+    {
+      key: 'remove-background',
+      title: '通用背景去除',
+      desc: '按背景色抠图、边缘羽化，导出透明 PNG（Canvas 纯前端）',
+      to: '/remove-background'
+    },
+    {
+      key: 'image-compress',
+      title: '图片压缩',
+      desc: '批量压缩画质与体积，单张下载或一键 ZIP 打包',
+      to: '/image-compress'
     }
   ]
 
