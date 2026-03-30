@@ -33,6 +33,12 @@ export default function Landing() {
       title: '图片批量改尺寸',
       desc: '指定统一宽度，批量缩放多张图片并预览',
       to: '/batch-resize'
+    },
+    {
+      key: 'gif-tool',
+      title: 'GIF 合成与拆分',
+      desc: '多图合成 GIF、或拆分 GIF 为逐帧预览',
+      to: '/gif-tool'
     }
   ]
 
