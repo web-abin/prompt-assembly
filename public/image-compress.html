@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>图片压缩 - 在线工具</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,sans-serif}
+body{max-width:700px;margin:30px auto;padding:0 20px;background:#f7f9fa}
+.card{background:#fff;padding:24px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.06)}
+h2{margin-top:0;color:#333}
+.area{margin:16px 0}
+label{display:block;margin-bottom:8px;font-weight:500}
+input,button{padding:10px 14px;border-radius:8px;border:1px solid #ddd;width:100%}
+button{background:#4e82f1;color:#fff;border:none;cursor:pointer;margin-top:6px}
+.preview{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.preview img{height:60px;border-radius:6px}
+.follow{background:#e8f4ff;padding:14px;border-radius:8px;color:#0d47a1;margin-top:20px;text-align:center}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>图片压缩 在线工具</h2>
+
+  <div class="area">
+    <label>压缩质量（10-100）</label>
+    <input type="range" id="quality" min="10" max="100" value="80">
+  </div>
+
+  <div class="area">
+    <label>选择图片（可批量）</label>
+    <input type="file" id="file" accept="image/*" multiple>
+  </div>
+
+  <button id="start">开始压缩</button>
+
+  <div id="preview" class="preview"></div>
+
+  <div class="follow">
+    🎁 关注公众号，回复【压缩】获取<br>高清批量压缩工具
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.11.0/dist/browser-image-compression.min.js"></script>
+<script>
+const start = document.getElementById('start');
+const preview = document.getElementById('preview');
+
+start.onclick = async () => {
+  const files = Array.from(document.getElementById('file').files);
+  const quality = document.getElementById('quality').value / 100;
+  if (files.length === 0) return alert('请选择图片');
+  
+  preview.innerHTML = '';
+  for (const f of files) {
+    const compressed = await imageCompression(f, {
+      maxSizeMB: 1,
+      quality: quality
+    });
+    const url = URL.createObjectURL(compressed);
+    const img = new Image();
+    img.src = url;
+    preview.appendChild(img);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'compressed-' + f.name;
+    a.click();
+  }
+};
+</script>
+</body>
+</html>
