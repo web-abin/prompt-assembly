@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom'
-import logoUrl from '../assets/icon/logo.svg'
+import LandingHeader from '../components/LandingHeader'
 
 export default function About() {
   return (
@@ -10,22 +9,7 @@ export default function About() {
         <div className="grain" />
       </div>
 
-      <header className="landing-header">
-        <Link to="/" className="brand brand-link">
-          <div className="logo">
-            <img src={logoUrl} alt="" />
-          </div>
-          <div className="brand-text">
-            <h1 className="brand-title">快出图</h1>
-            <p className="brand-sub">轻量、实用的设计工具集合</p>
-          </div>
-        </Link>
-        <nav className="landing-nav">
-          <Link className="nav-link" to="/">
-            返回首页
-          </Link>
-        </nav>
-      </header>
+      <LandingHeader variant="simple" />
 
       <main className="landing-main about-main">
         <article className="about-panel">

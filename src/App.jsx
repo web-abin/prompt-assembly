@@ -6,6 +6,9 @@ import Detail from './pages/Detail'
 import Mall from './pages/Mall'
 import Landing from './pages/Landing'
 import About from './pages/About'
+import BatchResize from './pages/BatchResize'
+import SequenceFrame from './pages/SequenceFrame'
+import Spritesheet from './pages/Spritesheet'
 import './App.css'
 
 function DetailRoute() {
@@ -21,6 +24,9 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/about" element={<About />} />
+            <Route path="/batch-resize" element={<BatchResize />} />
+            <Route path="/sequence-frame" element={<SequenceFrame />} />
+            <Route path="/spritesheet" element={<Spritesheet />} />
             <Route path="/prompts" element={<Home />} />
             <Route path="/mall" element={<Mall />} />
             <Route path="/template/:id" element={<DetailRoute />} />
