@@ -11,6 +11,7 @@ import BatchResize from './pages/BatchResize'
 import SequenceFrame from './pages/SequenceFrame'
 import Spritesheet from './pages/Spritesheet'
 import RemoveBackground from './pages/RemoveBackground'
+import EmbeddedHtmlTool from './components/EmbeddedHtmlTool'
 import './App.css'
 
 const GifTool = lazy(() => import('./pages/GifTool'))
@@ -33,6 +34,16 @@ export default function App() {
             <Route path="/remove-background" element={<RemoveBackground />} />
             <Route path="/sequence-frame" element={<SequenceFrame />} />
             <Route path="/spritesheet" element={<Spritesheet />} />
+            <Route
+              path="/img-to-spritesheet"
+              element={
+                <EmbeddedHtmlTool
+                  title="精灵图采集"
+                  htmlFile="img-to-spritesheet.html"
+                  iframeTitle="精灵图智能提取与挑选"
+                />
+              }
+            />
             <Route
               path="/gif-tool"
               element={

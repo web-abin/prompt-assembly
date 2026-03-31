@@ -13,6 +13,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import { useToast } from '../context/ToastContext'
 import StyleReferenceModal from '../components/StyleReferenceModal'
 import RedeemModal from '../components/RedeemModal'
+import LandingFooter from '../components/LandingFooter'
 import giftUrl from '../assets/gift.png'
 import iconMall from '../assets/icon-mall.png'
 import iconGame from '../assets/icon-game.png'
@@ -346,12 +347,7 @@ export default function Home() {
         message="使用兑换码才能享受更多权益"
       />
 
-      <footer className="landing-footer">
-        <p>
-          © AI造物 · 快出图 | 2026.03.10 | 保留所有权利 |
-          联系我们：wellxabin@gmail.com
-        </p>
-      </footer>
+      <LandingFooter />
     </div>
   )
 }

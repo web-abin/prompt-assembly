@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
 import LandingHeader from './LandingHeader'
+import LandingFooter from './LandingFooter'
 
 /**
- * @param {{ title: string, children: import('react').ReactNode }} props
+ * @param {{ title: string, children: import('react').ReactNode, mainClassName?: string }} props
  */
-export default function ToolPageLayout({ title, children }) {
+export default function ToolPageLayout({ title, children, mainClassName = '' }) {
   useEffect(() => {
     const prev = document.title
     document.title = `${title} · 快出图`
@@ -23,14 +24,13 @@ export default function ToolPageLayout({ title, children }) {
 
       <LandingHeader />
 
-      <main className="landing-main tool-page-main">{children}</main>
+      <main
+        className={['landing-main', 'tool-page-main', mainClassName].filter(Boolean).join(' ')}
+      >
+        {children}
+      </main>
 
-      <footer className="landing-footer">
-        <p>
-          © AI造物 · 快出图 | 2026.03.10 | 保留所有权利 |
-          联系我们：wellxabin@gmail.com
-        </p>
-      </footer>
+      <LandingFooter />
     </div>
   )
 }

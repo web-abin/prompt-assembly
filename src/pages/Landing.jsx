@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useToast } from '../context/ToastContext'
 import RedeemModal from '../components/RedeemModal'
 import LandingHeader from '../components/LandingHeader'
+import LandingFooter from '../components/LandingFooter'
 
 export default function Landing() {
   const [redeemOpen, setRedeemOpen] = useState(false)
@@ -27,6 +28,12 @@ export default function Landing() {
       title: '精灵图合成',
       desc: '多张图片快速合成 SpriteSheet 并导出通用 JSON',
       to: '/spritesheet'
+    },
+    {
+      key: 'img-to-spritesheet',
+      title: '精灵图采集',
+      desc: '从整张贴图智能提取与挑选元素，导出选用',
+      to: '/img-to-spritesheet'
     },
     {
       key: 'batch-resize',
@@ -94,12 +101,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="landing-footer">
-        <p>
-          © AI造物 · 快出图 | 2026.03.10 | 保留所有权利 |
-          联系我们：wellxabin@gmail.com
-        </p>
-      </footer>
+      <LandingFooter />
 
       <img
         src={giftUrl}

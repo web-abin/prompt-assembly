@@ -22,7 +22,7 @@ export default function LandingHeader({ variant = 'full' }) {
 
   return (
     <>
-    <header className="landing-header">
+    <header id="landing-app-header" className="landing-header">
       <Link to="/" className="brand brand-link">
         <div className="logo">
           <img src={logoUrl} alt="" />
