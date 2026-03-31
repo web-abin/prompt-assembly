@@ -8,9 +8,9 @@ const BUSUANZI_JSONP =
   'https://busuanzi.ibruce.info/busuanzi?jsonpCallback='
 
 /** 访客数（site_uv）基础增量 */
-const BASE_SITE_UV = 22466
+const BASE_SITE_UV = 0
 /** 全站访问次数（site_pv）基础增量 */
-const BASE_SITE_PV = 131982
+const BASE_SITE_PV = 0
 
 function fetchBusuanziJsonp() {
   const cb = `bz_${Math.random().toString(36).slice(2)}`
@@ -67,7 +67,7 @@ export default function LandingFooter() {
         联系我们：wellxabin@gmail.com
       </p>
       <p className="landing-footer-stats" aria-live="polite">
-        访客数 {siteUv ?? '—'} · 访问次数 {sitePv ?? '—'}
+        访客数 {siteUv ?? '—'} · 浏览量 {sitePv ?? '—'}
       </p>
     </footer>
   )
