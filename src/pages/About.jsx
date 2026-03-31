@@ -1,4 +1,5 @@
 import LandingHeader from '../components/LandingHeader'
+import LandingFooter from '../components/LandingFooter'
 
 export default function About() {
   return (
@@ -41,12 +42,7 @@ export default function About() {
         </article>
       </main>
 
-      <footer className="landing-footer">
-        <p>
-          © AI造物 · 快出图 | 2026.03.10 | 保留所有权利 |
-          联系我们：wellxabin@gmail.com
-        </p>
-      </footer>
+      <LandingFooter />
     </div>
   )
 }

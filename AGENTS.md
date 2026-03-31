@@ -44,3 +44,16 @@
 - 各功能页的样式应做**局部隔离**，避免继续把大量页面专用样式堆进 `App.css` / `index.css` 等全局样式表。
 - 推荐做法：为该页建立 `*.module.css`（CSS Modules），在页面组件根节点挂载模块根 class，仅在该文件内书写该页布局与皮肤；与全局的交互仅限于必要的布局容器（如 `ToolPageLayout`）。
 - 需要复用多块页面时再抽取**共享**片段或变量，而不是默认写全局。
+
+## 静态 HTML 工具页（iframe 嵌入，不重写为 React）
+适用于独立写在 `public/` 下的单页 HTML（纯 Canvas/脚本工具等），**不必**整页迁成 React：新增路由时复用 `EmbeddedHtmlTool` 即可。
+
+1. 将 `.html` 放在 `public/` 根目录（或子目录，此时 `htmlFile` 写相对路径，如 `tools/foo.html`）。
+2. 在 `App.jsx` 增加 `Route`，例如：
+   - `path="/img-to-spritesheet"`
+   - `element={<EmbeddedHtmlTool title="页面标题" htmlFile="img-to-spritesheet.html" />}`
+3. `title` 会用于浏览器标签（经 `ToolPageLayout`）；可选 `iframeTitle` 作为 iframe 无障碍标题。
+4. 中间区域为全宽 iframe，`src` 使用 `import.meta.env.BASE_URL` 拼接文件名，与 `vite.config.js` 的 `base`（如 `/prompt-assembly/`）一致，GitHub Pages 下路径正确。
+5. 在首页 `Landing.jsx` 的 `tools` 数组中增加入口卡片（`to` 与路由一致）。
+
+后续同类工具均按此模式扩展即可。
