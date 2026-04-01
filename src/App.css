@@ -294,6 +294,21 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   text-decoration: underline;
 }
 
+.breadcrumb-back-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.breadcrumb-back-button:hover {
+  text-decoration: underline;
+}
+
 .detail-page-fill {
   max-width: none;
   width: 100%;
