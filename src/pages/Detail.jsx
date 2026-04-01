@@ -81,42 +81,88 @@ function QuickFillIcon() {
   )
 }
 
-function TemplateBlock({ body }) {
+function TemplateBlock({ body, onBodyChange, isModified, onReset }) {
   const [open, setOpen] = useState(true)
+  const [editing, setEditing] = useState(false)
   const segments = useMemo(() => getTemplateDisplaySegments(body ?? ''), [body])
+
+  function handleEditToggle() {
+    setEditing((e) => !e)
+    if (!open) setOpen(true)
+  }
 
   return (
     <section className="template-section">
-      <button
-        type="button"
-        className="collapse-toggle"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-      >
-        <span className="collapse-label">Prompt 模版</span>
-        <span className="collapse-icon">{open ? '收起' : '展开'}</span>
-      </button>
-      {open && (
-        <div className="template-block template-block-rendered">
-          {segments.length === 0 ? (
-            <span className="muted">（空）</span>
-          ) : (
-            segments.map((seg, i) =>
-              seg.type === 'text' ? (
-                <span key={i}>{seg.content}</span>
-              ) : (
-                <span
-                  key={i}
-                  className="ph-token"
-                  title={`占位符 ${seg.keyIndex}：${seg.key}`}
-                >
-                  <span className="ph-badge">{seg.keyIndex}</span>
-                  <span className="ph-brackets">[{seg.key}]</span>
-                </span>
-              )
-            )
-          )}
+      <div className="collapse-toggle-row">
+        <div className="template-block-title-group">
+          <span className="collapse-label">Prompt 模版</span>
+          <div className="template-block-actions">
+            {isModified && (
+              <button
+                type="button"
+                className="btn-link btn-link-muted"
+                onClick={onReset}
+                title="恢复原始模版"
+              >
+                重置
+              </button>
+            )}
+            <button
+              type="button"
+              className={`btn btn-sm ${
+                editing ? 'btn-primary' : 'btn-secondary'
+              }`}
+              onClick={handleEditToggle}
+              title={editing ? '切换到预览' : '临时编辑模版'}
+            >
+              {editing ? '预览' : '编辑'}
+            </button>
+          </div>
         </div>
+        <button
+          type="button"
+          className="collapse-toggle"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+        >
+          <span className="collapse-icon">{open ? '收起' : '展开'}</span>
+        </button>
+      </div>
+      {open && (
+        editing ? (
+          <textarea
+            className="textarea template-block-edit"
+            value={body ?? ''}
+            onChange={(e) => onBodyChange(e.target.value)}
+            spellCheck={false}
+            placeholder="在此编辑模版内容（仅本次临时修改）…"
+            rows={8}
+          />
+        ) : (
+          <div className="template-block template-block-rendered">
+            {segments.length === 0 ? (
+              <span className="muted">（空）</span>
+            ) : (
+              segments.map((seg, i) =>
+                seg.type === 'text' ? (
+                  <span key={i}>{seg.content}</span>
+                ) : (
+                  <span
+                    key={i}
+                    className="ph-token"
+                    title={`占位符 ${seg.keyIndex}：${seg.key}`}
+                  >
+                    <span className="ph-badge">{seg.keyIndex}</span>
+                    <span className="ph-brackets">[{seg.key}]</span>
+                  </span>
+                )
+              )
+            )}
+          </div>
+        )
+      )}
+      {isModified && (
+        <p className="template-modified-hint">已临时修改模版（不影响已保存内容）</p>
       )}
     </section>
   )
@@ -129,14 +175,18 @@ export default function Detail() {
   const [values, setValues] = useState({})
   const [quickPickerKey, setQuickPickerKey] = useState(null)
   const [styleRefOpen, setStyleRefOpen] = useState(false)
+  const [editedBody, setEditedBody] = useState(null)
   const outputRef = useRef(null)
 
-  const keys = useMemo(() => (tpl ? extractPlaceholders(tpl.body) : []), [tpl])
+  const activeBody = editedBody !== null ? editedBody : tpl?.body ?? ''
+  const isBodyModified = editedBody !== null && editedBody !== tpl?.body
+
+  const keys = useMemo(() => extractPlaceholders(activeBody), [activeBody])
 
   const assembled = useMemo(() => {
     if (!tpl) return ''
-    return assemblePrompt(tpl.body, values)
-  }, [tpl, values])
+    return assemblePrompt(activeBody, values)
+  }, [activeBody, tpl, values])
 
   function setField(key, v) {
     setValues((prev) => ({ ...prev, [key]: v }))
@@ -186,7 +236,12 @@ export default function Detail() {
             </div>
           </nav>
 
-          <TemplateBlock body={tpl.body} />
+          <TemplateBlock
+            body={activeBody}
+            onBodyChange={(v) => { setEditedBody(v); setValues({}) }}
+            isModified={isBodyModified}
+            onReset={() => { setEditedBody(null); setValues({}) }}
+          />
 
           <section className="form-section">
             <h2 className="section-title">填写占位符</h2>

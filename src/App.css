@@ -353,22 +353,36 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   margin-bottom: 28px;
 }
 
-.collapse-toggle {
+.collapse-toggle:hover {
+  border-color: var(--accent-border);
+}
+
+.collapse-toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--code-bg);
-  cursor: pointer;
   font: inherit;
   color: var(--text-h);
+  box-sizing: border-box;
 }
 
-.collapse-toggle:hover {
-  border-color: var(--accent-border);
+.template-block-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.template-block-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .collapse-label {
@@ -1258,12 +1272,22 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--code-bg);
-  cursor: pointer;
   font: inherit;
-  color: inherit;
+  color: var(--text-h);
+  box-sizing: border-box;
+  cursor: pointer;
   transition:
     border-color 0.15s,
     background 0.15s;
+}
+
+.collapse-toggle {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 14px;
 }
 
 .quick-params-pick-row:hover {
