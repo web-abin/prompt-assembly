@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { getTemplate } from '../lib/storage'
 import {
   extractPlaceholders,
@@ -169,6 +169,7 @@ function TemplateBlock({ body, onBodyChange, isModified, onReset }) {
 }
 
 export default function Detail() {
+  const navigate = useNavigate()
   const { id } = useParams()
   const { showToast } = useToast()
   const tpl = useMemo(() => getTemplate(id), [id])
@@ -221,7 +222,7 @@ export default function Detail() {
       <div className="detail-layout detail-layout-fill">
         <div className="detail-main">
           <nav className="breadcrumb breadcrumb-bar">
-            <Link to="/">← 模版列表</Link>
+            <button type="button" onClick={() => navigate(-1)} className="breadcrumb-back-button">← 返回</button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <button
                 type="button"
