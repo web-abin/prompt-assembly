@@ -41,6 +41,62 @@
   margin-left: 10px;
 }
 
+.externalLinks {
+  margin: 20px 0 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f7fbff 0%, #f3f6fb 100%);
+  border: 1px solid #e3edf9;
+}
+
+.externalDesc {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #667085;
+}
+
+.externalGrid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.externalCard {
+  display: block;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #dbe7f5;
+  text-decoration: none;
+  color: #1f2937;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.externalCard:hover {
+  transform: translateY(-1px);
+  border-color: #b9d3f5;
+  box-shadow: 0 10px 24px rgba(24, 144, 255, 0.08);
+}
+
+.externalName {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.externalMeta {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #667085;
+}
+
 .area {
   margin: 20px 0;
 }
@@ -272,6 +328,10 @@
   .subtitle {
     margin-left: 0;
     width: 100%;
+  }
+
+  .externalGrid {
+    grid-template-columns: 1fr;
   }
 
   .controlRow {

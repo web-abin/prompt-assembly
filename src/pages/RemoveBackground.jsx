@@ -17,7 +17,18 @@ function hexToRgb(hex) {
 export default function RemoveBackground() {
   const { showToast } = useToast()
   const originalImageRef = useRef(null)
-  const processRef = useRef(null)
+  const externalTools = [
+    {
+      name: 'Adobe Express',
+      desc: '适合快速在线抠图与简单后续编辑',
+      url: 'https://express.adobe.com/id/urn:aaid:sc:AP:e582006d-1751-4faf-a085-6e6ebc40f48a?category=media&tab=photos'
+    },
+    {
+      name: 'remove.bg',
+      desc: '专业背景移除工具，适合一键生成透明背景 PNG',
+      url: 'https://www.remove.bg/'
+    }
+  ]
 
   const [bgColorHex, setBgColorHex] = useState('#FFFFFF')
   const [threshold, setThreshold] = useState(30)
@@ -77,8 +88,6 @@ export default function RemoveBackground() {
     setResultDataUrl(finalDataUrl)
   }, [bgColorHex, feather, showToast, threshold])
 
-  processRef.current = process
-
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -92,7 +101,7 @@ export default function RemoveBackground() {
         originalImageRef.current = img
         setOriginPreview(dataUrl)
         setResultDataUrl(null)
-        processRef.current()
+        process()
       }
       img.src = dataUrl
     }
@@ -126,7 +135,7 @@ export default function RemoveBackground() {
     process()
   }
 
-  const downloadName = `ai_rembg_${Date.now()}.png`
+  const downloadName = 'ai_rembg.png'
 
   return (
     <ToolPageLayout title="通用背景去除">
@@ -136,6 +145,27 @@ export default function RemoveBackground() {
             通用背景去除工具
             <small className={styles.subtitle}>(Canvas 零依赖版)</small>
           </h2>
+
+          <section className={styles.externalLinks} aria-label="第三方去背景工具">
+            <label className={styles.label}>第三方去背景工具入口</label>
+            <p className={styles.externalDesc}>
+              如果你想直接使用更成熟的在线 AI 抠图服务，也可以先试试下面这些站点。
+            </p>
+            <div className={styles.externalGrid}>
+              {externalTools.map((tool) => (
+                <a
+                  key={tool.name}
+                  className={styles.externalCard}
+                  href={tool.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span className={styles.externalName}>{tool.name}</span>
+                  <span className={styles.externalMeta}>{tool.desc}</span>
+                </a>
+              ))}
+            </div>
+          </section>
 
           <div className={styles.area}>
             <label className={styles.label} htmlFor="rb-file">
