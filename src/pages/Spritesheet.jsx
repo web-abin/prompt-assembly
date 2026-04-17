@@ -15,8 +15,8 @@ export default function Spritesheet() {
   const { showToast } = useToast()
   const [cellWidth, setCellWidth] = useState(128)
   const [cols, setCols] = useState(10)
-  const [padding, setPadding] = useState(0)
-  const [jsonFormat, setJsonFormat] = useState('normal')
+  const [padding, setPadding] = useState(10)
+  const [jsonFormat, setJsonFormat] = useState('pixi')
   const [images, setImages] = useState([])
   const [frames, setFrames] = useState([])
   const [sheetUrl, setSheetUrl] = useState('')
@@ -74,8 +74,16 @@ export default function Spritesheet() {
     const count = images.length
     const rows = Math.ceil(count / colCount)
 
-    const ratio = images[0].img.height / images[0].img.width
-    const h = Math.round(w * ratio)
+    const h = Math.max(
+      1,
+      Math.ceil(
+        images.reduce((maxH, { img }) => {
+          const scale = Math.min(1, w / img.width)
+          const displayH = img.height * scale
+          return Math.max(maxH, displayH)
+        }, 0)
+      )
+    )
 
     const canvas = document.createElement('canvas')
     canvas.width = colCount * w + (colCount - 1) * pad
@@ -90,7 +98,14 @@ export default function Spritesheet() {
       const row = Math.floor(i / colCount)
       const x = col * (w + pad)
       const y = row * (h + pad)
-      ctx.drawImage(img, x, y, w, h)
+
+      const scale = Math.min(1, w / img.width, h / img.height)
+      const drawW = Math.round(img.width * scale)
+      const drawH = Math.round(img.height * scale)
+      const offsetX = Math.round((w - drawW) / 2)
+      const offsetY = Math.round((h - drawH) / 2)
+
+      ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
       nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
     })
 
@@ -118,7 +133,7 @@ export default function Spritesheet() {
     if (!sheetUrl) return
     const a = document.createElement('a')
     a.href = sheetUrl
-    a.download = 'role.png'
+    a.download = 'spritesheet.png'
     a.click()
   }, [sheetUrl])
 
@@ -245,7 +260,7 @@ export default function Spritesheet() {
             id="spritesheet-pad"
             className="tool-input"
             type="number"
-            min={0}
+            min={4}
             value={padding}
             onChange={(e) => setPadding(Number(e.target.value) || 0)}
           />

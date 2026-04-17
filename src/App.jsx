@@ -45,6 +45,16 @@ export default function App() {
               }
             />
             <Route
+              path="/smart-cutout"
+              element={
+                <EmbeddedHtmlTool
+                  title="智能抠图（透明背景）"
+                  htmlFile="智能抠图(透明背景).html"
+                  iframeTitle="智能抠图（透明背景）"
+                />
+              }
+            />
+            <Route
               path="/gif-tool"
               element={
                 <Suspense fallback={<div className="route-suspense-fallback">加载中…</div>}>
