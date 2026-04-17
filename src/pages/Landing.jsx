@@ -54,6 +54,12 @@ export default function Landing() {
       to: '/remove-background'
     },
     {
+      key: 'smart-cutout',
+      title: '智能抠图（透明背景）',
+      desc: '自动识别主体并移除背景，直接导出透明底图',
+      to: '/smart-cutout'
+    },
+    {
       key: 'image-compress',
       title: '图片压缩',
       desc: '批量压缩画质与体积，单张下载或一键 ZIP 打包',
