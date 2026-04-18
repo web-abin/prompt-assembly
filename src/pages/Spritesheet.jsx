@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ToolPageLayout from '../components/ToolPageLayout'
 import { useToast } from '../context/ToastContext'
+import styles from './Spritesheet.module.css'
 
 const FORMATS = [
   { value: 'normal', label: '普通数组格式' },
@@ -45,6 +46,10 @@ export default function Spritesheet() {
         prev.forEach((p) => URL.revokeObjectURL(p.revoke))
         return []
       })
+      if (sheetBlobUrlRef.current) {
+        URL.revokeObjectURL(sheetBlobUrlRef.current)
+        sheetBlobUrlRef.current = null
+      }
 
       const loaded = []
       for (const f of files) {
@@ -57,10 +62,25 @@ export default function Spritesheet() {
         loaded.push({ img, revoke: u })
       }
       setImages(loaded)
+      setSheetVisible(false)
+      setFrames([])
+      setSheetUrl('')
       showToast(`已加载 ${loaded.length} 张图片`)
     },
     [showToast]
   )
+
+  const moveImage = useCallback((index, delta) => {
+    setImages((prev) => {
+      const j = index + delta
+      if (j < 0 || j >= prev.length) return prev
+      const next = [...prev]
+      const t = next[index]
+      next[index] = next[j]
+      next[j] = t
+      return next
+    })
+  }, [])
 
   const makeSheet = useCallback(() => {
     if (!images.length) {
@@ -207,7 +227,7 @@ export default function Spritesheet() {
       <div className="tool-panel">
         <h2 className="tool-page-title">SpriteSheet 精灵图合成</h2>
         <p className="tool-page-lead">
-          多张图片合成一张雪碧图，并导出主流引擎可用的 JSON。
+          多张图片合成一张雪碧图，并导出主流引擎可用的 JSON。加载后可调整顺序再生成。
         </p>
 
         <div className="tool-field">
@@ -222,6 +242,47 @@ export default function Spritesheet() {
             accept="image/*"
             onChange={loadFiles}
           />
+          {images.length > 0 && (
+            <div className={styles.orderBlock}>
+              <div className={styles.orderHint}>
+                合成顺序（影响雪碧图格子与 frame 编号，从上到下为第 1 帧起）
+              </div>
+              <div className={styles.orderList}>
+                {images.map((entry, index) => (
+                  <div key={entry.revoke} className={styles.orderRow}>
+                    <span className={styles.orderIndex}>{index + 1}</span>
+                    <img
+                      className={styles.orderThumb}
+                      src={entry.revoke}
+                      alt=""
+                      width={40}
+                      height={40}
+                    />
+                    <div className={styles.orderActions}>
+                      <button
+                        type="button"
+                        className={`tool-btn-secondary ${styles.orderBtn}`}
+                        disabled={index === 0}
+                        onClick={() => moveImage(index, -1)}
+                        aria-label={`将第 ${index + 1} 张上移`}
+                      >
+                        上移
+                      </button>
+                      <button
+                        type="button"
+                        className={`tool-btn-secondary ${styles.orderBtn}`}
+                        disabled={index === images.length - 1}
+                        onClick={() => moveImage(index, 1)}
+                        aria-label={`将第 ${index + 1} 张下移`}
+                      >
+                        下移
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="tool-field">
@@ -297,7 +358,7 @@ export default function Spritesheet() {
             />
             <div className="tool-btn-row tool-btn-row-stacked">
               <button type="button" className="tool-btn-download" onClick={downloadPng}>
-                下载 role.png
+                下载 spritesheet.png
               </button>
               <button type="button" className="tool-btn-json" onClick={downloadJson}>
                 下载 spritesheet.json
