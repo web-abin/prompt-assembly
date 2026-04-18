@@ -85,19 +85,19 @@ export default function Spritesheet() {
     })
   }, [])
 
-  const swapWithSlot = useCallback(
-    (fromIndex, raw) => {
+  const handleOrderSlotBlur = useCallback(
+    (fromIndex) => (e) => {
+      const el = e.currentTarget
       const n = images.length
-      const slot = parseInt(String(raw).trim(), 10)
+      const cur = fromIndex + 1
+      const slot = parseInt(String(el.value).trim(), 10)
       if (!Number.isFinite(slot) || slot < 1 || slot > n) {
-        showToast(`请输入 1～${n} 的目标序号`)
-        return false
+        showToast(`请输入 1～${n} 的序号`)
+        el.value = String(cur)
+        return
       }
+      if (slot === cur) return
       const toIndex = slot - 1
-      if (toIndex === fromIndex) {
-        showToast('不能与自身调换')
-        return false
-      }
       setImages((prev) => {
         const next = [...prev]
         const a = next[fromIndex]
@@ -105,21 +105,8 @@ export default function Spritesheet() {
         next[toIndex] = a
         return next
       })
-      return true
     },
     [images.length, showToast]
-  )
-
-  const submitSwapForRow = useCallback(
-    (fromIndex, rowEl) => {
-      const input = rowEl?.querySelector('input[type="number"]')
-      if (!input) return
-      if (swapWithSlot(fromIndex, input.value)) {
-        input.value = ''
-        input.blur()
-      }
-    },
-    [swapWithSlot]
   )
 
   const clearDragState = useCallback(() => {
@@ -324,13 +311,12 @@ export default function Spritesheet() {
           {images.length > 0 && (
             <div className={styles.orderBlock}>
               <div className={styles.orderHint}>
-                合成顺序（影响雪碧图格子与 frame 编号）：可拖左侧手柄、上移/下移，或输入目标序号后与该项对调位置。
+                合成顺序（影响雪碧图格子与 frame 编号）：可拖左侧手柄或上移/下移；左侧序号为可编辑序号，改为目标位置后失焦即与对调。
               </div>
               <div className={styles.orderList}>
                 {images.map((entry, index) => (
                   <div
                     key={entry.revoke}
-                    data-order-row
                     className={`${styles.orderRow} ${
                       dragOverIndex === index ? styles.orderRowDropOver : ''
                     } ${draggingIndex === index ? styles.orderRowDragging : ''}`}
@@ -348,7 +334,23 @@ export default function Spritesheet() {
                     >
                       <span className={styles.dragGripDots} aria-hidden />
                     </button>
-                    <span className={styles.orderIndex}>{index + 1}</span>
+                    <input
+                      key={`slot-${entry.revoke}-${index}`}
+                      type="number"
+                      min={1}
+                      max={images.length}
+                      inputMode="numeric"
+                      defaultValue={index + 1}
+                      className={`tool-input ${styles.orderSlotInput}`}
+                      aria-label={`当前第 ${index + 1} 张，改为目标序号 1～${images.length} 后失焦即与该位置对调`}
+                      onBlur={handleOrderSlotBlur(index)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          e.currentTarget.blur()
+                        }
+                      }}
+                    />
                     <img
                       className={styles.orderThumb}
                       src={entry.revoke}
@@ -357,36 +359,6 @@ export default function Spritesheet() {
                       height={40}
                       draggable={false}
                     />
-                    <div className={styles.swapGroup}>
-                      <span className={styles.swapLabel}>与序号</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={images.length}
-                        inputMode="numeric"
-                        className={`tool-input ${styles.swapInput}`}
-                        aria-label={`将第 ${index + 1} 张与哪一张对调（填目标序号 1～${images.length}）`}
-                        placeholder=""
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            const row = e.currentTarget.closest('[data-order-row]')
-                            submitSwapForRow(index, row)
-                          }
-                        }}
-                      />
-                      <span className={styles.swapLabel}>对调</span>
-                      <button
-                        type="button"
-                        className={`tool-btn-secondary ${styles.orderBtn} ${styles.swapBtn}`}
-                        onClick={(e) => {
-                          const row = e.currentTarget.closest('[data-order-row]')
-                          submitSwapForRow(index, row)
-                        }}
-                      >
-                        调换
-                      </button>
-                    </div>
                     <div className={styles.orderActions}>
                       <button
                         type="button"
