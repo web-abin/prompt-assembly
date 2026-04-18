@@ -25,6 +25,9 @@ export default function Spritesheet() {
   const [sheetVisible, setSheetVisible] = useState(false)
   const sheetBlobUrlRef = useRef(null)
   const imagesRef = useRef([])
+  const dragFromRef = useRef(null)
+  const [dragOverIndex, setDragOverIndex] = useState(null)
+  const [draggingIndex, setDraggingIndex] = useState(null)
 
   useEffect(() => {
     imagesRef.current = images
@@ -81,6 +84,45 @@ export default function Spritesheet() {
       return next
     })
   }, [])
+
+  const clearDragState = useCallback(() => {
+    dragFromRef.current = null
+    setDragOverIndex(null)
+    setDraggingIndex(null)
+  }, [])
+
+  const handleRowDragStart = useCallback((index) => (e) => {
+    dragFromRef.current = index
+    setDraggingIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(index))
+  }, [])
+
+  const handleRowDragOver = useCallback((index) => (e) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex((prev) => (prev === index ? prev : index))
+  }, [])
+
+  const handleRowDrop = useCallback(
+    (toIndex) => (e) => {
+      e.preventDefault()
+      const from = dragFromRef.current
+      clearDragState()
+      if (from === null || from === toIndex) return
+      setImages((prev) => {
+        const next = [...prev]
+        const [item] = next.splice(from, 1)
+        next.splice(toIndex, 0, item)
+        return next
+      })
+    },
+    [clearDragState]
+  )
+
+  const handleRowDragEnd = useCallback(() => {
+    clearDragState()
+  }, [clearDragState])
 
   const makeSheet = useCallback(() => {
     if (!images.length) {
@@ -245,11 +287,29 @@ export default function Spritesheet() {
           {images.length > 0 && (
             <div className={styles.orderBlock}>
               <div className={styles.orderHint}>
-                合成顺序（影响雪碧图格子与 frame 编号，从上到下为第 1 帧起）
+                合成顺序（影响雪碧图格子与 frame 编号）：可拖左侧手柄排序，或使用上移 / 下移。
               </div>
               <div className={styles.orderList}>
                 {images.map((entry, index) => (
-                  <div key={entry.revoke} className={styles.orderRow}>
+                  <div
+                    key={entry.revoke}
+                    className={`${styles.orderRow} ${
+                      dragOverIndex === index ? styles.orderRowDropOver : ''
+                    } ${draggingIndex === index ? styles.orderRowDragging : ''}`}
+                    onDragOver={handleRowDragOver(index)}
+                    onDrop={handleRowDrop(index)}
+                  >
+                    <button
+                      type="button"
+                      className={styles.dragHandle}
+                      draggable
+                      onDragStart={handleRowDragStart(index)}
+                      onDragEnd={handleRowDragEnd}
+                      aria-label={`拖拽调整第 ${index + 1} 张的顺序`}
+                      title="拖拽排序"
+                    >
+                      <span className={styles.dragGripDots} aria-hidden />
+                    </button>
                     <span className={styles.orderIndex}>{index + 1}</span>
                     <img
                       className={styles.orderThumb}
@@ -257,6 +317,7 @@ export default function Spritesheet() {
                       alt=""
                       width={40}
                       height={40}
+                      draggable={false}
                     />
                     <div className={styles.orderActions}>
                       <button
