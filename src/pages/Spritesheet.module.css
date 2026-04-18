@@ -74,10 +74,13 @@
   background-size: 5px 5px;
 }
 
-.orderIndex {
-  font-size: 0.75rem;
-  min-width: 1.5rem;
-  color: var(--tool-muted, #666);
+.orderSlotInput {
+  width: 2.75rem;
+  min-width: 0;
+  padding: 0.2rem 0.25rem;
+  font-size: 0.8rem;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .orderThumb {
@@ -89,36 +92,11 @@
   flex-shrink: 0;
 }
 
-.swapGroup {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.35rem;
-  margin-left: auto;
-}
-
-.swapLabel {
-  font-size: 0.78rem;
-  color: var(--tool-muted, #666);
-  white-space: nowrap;
-}
-
-.swapInput {
-  width: 3.25rem;
-  min-width: 0;
-  padding: 0.25rem 0.35rem;
-  font-size: 0.85rem;
-  text-align: center;
-}
-
-.swapBtn {
-  min-width: 2.75rem;
-}
-
 .orderActions {
   display: flex;
   gap: 0.25rem;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .orderBtn {
