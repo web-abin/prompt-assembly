@@ -1,0 +1,54 @@
+.orderBlock {
+  margin-top: 0.75rem;
+}
+
+.orderHint {
+  font-size: 0.85rem;
+  color: var(--tool-muted, #666);
+  margin-bottom: 0.5rem;
+}
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 0.35rem 0;
+}
+
+.orderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  background: var(--tool-surface-2, rgba(0, 0, 0, 0.04));
+}
+
+.orderIndex {
+  font-size: 0.75rem;
+  min-width: 1.5rem;
+  color: var(--tool-muted, #666);
+}
+
+.orderThumb {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: var(--tool-thumb-bg, #f0f0f0);
+  flex-shrink: 0;
+}
+
+.orderActions {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.orderBtn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  min-width: 2.5rem;
+}

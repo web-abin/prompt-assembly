@@ -92,6 +92,7 @@
         <button id="selectAll">全选</button>
         <button id="unselectAll">全不选</button>
         <button id="downloadSel">下载选中(ZIP)</button>
+        <button type="button" id="goSpritesheet">去合成精灵图</button>
         
         <div class="threshold">
             <label>去重相似度：</label>
@@ -118,6 +119,7 @@ const startBtn = document.getElementById('start');
 const selectAllBtn = document.getElementById('selectAll');
 const unselectAllBtn = document.getElementById('unselectAll');
 const downloadSelBtn = document.getElementById('downloadSel');
+const goSpritesheetBtn = document.getElementById('goSpritesheet');
 const similarSlider = document.getElementById('similar');
 const simText = document.getElementById('simText');
 const result = document.getElementById('result');
@@ -297,6 +299,19 @@ document.addEventListener('change', e => {
     updateSelectedPreview();
   }
 });
+
+// 跳转到站内「精灵图合成」页（HashRouter）
+goSpritesheetBtn.onclick = () => {
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.location.hash = '#/spritesheet';
+    } else {
+      window.location.hash = '#/spritesheet';
+    }
+  } catch (err) {
+    window.location.hash = '#/spritesheet';
+  }
+};
 
 // 下载选中
 downloadSelBtn.onclick = async () => {
