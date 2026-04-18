@@ -89,10 +89,36 @@
   flex-shrink: 0;
 }
 
+.swapGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.35rem;
+  margin-left: auto;
+}
+
+.swapLabel {
+  font-size: 0.78rem;
+  color: var(--tool-muted, #666);
+  white-space: nowrap;
+}
+
+.swapInput {
+  width: 3.25rem;
+  min-width: 0;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.swapBtn {
+  min-width: 2.75rem;
+}
+
 .orderActions {
   display: flex;
   gap: 0.25rem;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .orderBtn {
