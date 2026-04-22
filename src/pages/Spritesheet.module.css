@@ -104,3 +104,19 @@
   font-size: 0.8rem;
   min-width: 2.5rem;
 }
+
+.aspectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.aspectInput {
+  width: 5rem;
+  flex: 0 0 auto;
+}
+
+.aspectColon {
+  font-weight: 600;
+  opacity: 0.7;
+}
