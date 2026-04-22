@@ -36,6 +36,18 @@ export default function Landing() {
       to: '/img-to-spritesheet'
     },
     {
+      key: 'smart-cutout',
+      title: '智能抠图（透明背景）',
+      desc: '自动识别主体并移除背景，直接导出透明底图',
+      to: '/smart-cutout'
+    },
+    {
+      key: 'remove-background',
+      title: '通用背景去除',
+      desc: '按背景色抠图、边缘羽化，导出透明 PNG（Canvas 纯前端）',
+      to: '/remove-background'
+    },
+    {
       key: 'batch-resize',
       title: '图片批量改尺寸',
       desc: '指定统一宽度，批量缩放多张图片并预览',
@@ -48,16 +60,10 @@ export default function Landing() {
       to: '/gif-tool'
     },
     {
-      key: 'remove-background',
-      title: '通用背景去除',
-      desc: '按背景色抠图、边缘羽化，导出透明 PNG（Canvas 纯前端）',
-      to: '/remove-background'
-    },
-    {
-      key: 'smart-cutout',
-      title: '智能抠图（透明背景）',
-      desc: '自动识别主体并移除背景，直接导出透明底图',
-      to: '/smart-cutout'
+      key: 'audio-trim',
+      title: '截取音频',
+      desc: '本地裁剪音频片段，导出常见音频格式',
+      to: '/audio-trim'
     },
     {
       key: 'image-compress',

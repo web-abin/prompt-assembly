@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>音频批量裁剪/归一化/打包工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.all.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; padding: 40px; color: #1a1a1a; }
+        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h2 { margin-top: 0; color: #333; display: flex; align-items: center; gap: 10px; }
+        .drop-zone { border: 2px dashed #d9d9d9; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 25px; border-radius: 8px; transition: all 0.3s; background: #fafafa; }
+        .drop-zone:hover { border-color: #40a9ff; background: #f0f7ff; }
+        .audio-item { border-bottom: 1px solid #f0f0f0; padding: 15px 0; display: grid; grid-template-columns: 2fr 1fr 1fr 100px 80px; gap: 15px; align-items: center; }
+        .audio-item:last-child { border-bottom: none; }
+        input[type="number"] { width: 100%; padding: 6px; border: 1px solid #d9d9d9; border-radius: 4px; }
+        button { cursor: pointer; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 500; transition: 0.2s; }
+        .play-btn { background: #e6f7ff; color: #1890ff; }
+        .play-btn:hover { background: #bae7ff; }
+        .export-btn { width: 100%; padding: 16px; font-size: 16px; background: #52c41a; color: white; margin-top: 30px; box-shadow: 0 2px 8px rgba(82,196,26,0.3); }
+        .export-btn:hover { background: #73d13d; }
+        .export-btn:disabled { background: #bfbfbf; cursor: not-allowed; box-shadow: none; }
+        .info-tag { font-size: 12px; color: #8c8c8c; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎵 游戏音频助手 <small style="font-size: 14px; font-weight: normal; color: #666;">(MP3 批量打包版)</small></h2>
+    
+    <div class="drop-zone" id="dropZone">
+        <strong>点击或拖拽音频</strong>
+        <div class="info-tag">支持 MP3 / WAV，自动执行 0.95 峰值归一化</div>
+    </div>
+    
+    <div id="audioList"></div>
+
+    <button class="export-btn" id="exportAll">一键打包导出 MP3 (.zip)</button>
+    <p id="statusMsg" style="text-align: center; font-size: 13px; color: #666; margin-top: 10px;"></p>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioListContainer = document.getElementById('audioList');
+    const dropZone = document.getElementById('dropZone');
+    const exportBtn = document.getElementById('exportAll');
+    const statusMsg = document.getElementById('statusMsg');
+    let filesData = [];
+
+    // --- 文件交互逻辑 ---
+    dropZone.onclick = () => { 
+        const input = document.createElement('input'); 
+        input.type = 'file'; 
+        input.multiple = true; 
+        input.onchange = e => handleFiles(e.target.files); 
+        input.click(); 
+    };
+
+    dropZone.ondragover = e => { e.preventDefault(); dropZone.style.borderColor = '#40a9ff'; };
+    dropZone.ondragleave = () => dropZone.style.borderColor = '#d9d9d9';
+    dropZone.ondrop = e => { e.preventDefault(); handleFiles(e.dataTransfer.files); };
+
+    async function handleFiles(files) {
+        for (let file of files) {
+            statusMsg.innerText = `正在读取: ${file.name}...`;
+            const arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            addAudioItem(file.name, audioBuffer);
+        }
+        statusMsg.innerText = `已导入 ${filesData.length} 个文件`;
+    }
+
+    function addAudioItem(name, buffer) {
+        // 去掉原后缀保留文件名
+        const baseName = name.substring(0, name.lastIndexOf('.')) || name;
+        const item = { baseName, buffer, start: 0, end: buffer.duration.toFixed(3) };
+        filesData.push(item);
+
+        const row = document.createElement('div');
+        row.className = 'audio-item';
+        row.innerHTML = `
+            <div style="overflow:hidden;">
+                <div style="font-weight:500; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">${name}</div>
+                <div class="info-tag">时长: ${buffer.duration.toFixed(2)}s</div>
+            </div>
+            <div><input type="number" step="0.001" value="0" class="start-in" title="开始时间"></div>
+            <div><input type="number" step="0.001" value="${item.end}" class="end-in" title="结束时间"></div>
+            <button class="play-btn">试听</button>
+            <button class="play-btn" style="background:#fff1f0; color:#ff4d4f;" onclick="this.parentElement.remove()">删除</button>
+        `;
+
+        const startIn = row.querySelector('.start-in');
+        const endIn = row.querySelector('.end-in');
+        const playBtn = row.querySelector('.play-btn');
+
+        startIn.onchange = () => item.start = parseFloat(startIn.value);
+        endIn.onchange = () => item.end = parseFloat(endIn.value);
+
+        let currentSource = null;
+        playBtn.onclick = () => {
+            if (currentSource) { currentSource.stop(); currentSource = null; playBtn.innerText = "试听"; return; }
+            currentSource = audioCtx.createBufferSource();
+            currentSource.buffer = buffer;
+            currentSource.connect(audioCtx.destination);
+            currentSource.start(0, item.start, item.end - item.start);
+            playBtn.innerText = "停止";
+            currentSource.onended = () => { playBtn.innerText = "试听"; currentSource = null; };
+        };
+
+        audioListContainer.appendChild(row);
+    }
+
+    // --- 核心处理逻辑 ---
+    exportBtn.onclick = async () => {
+        if (filesData.length === 0) return;
+        
+        exportBtn.disabled = true;
+        const zip = new JSZip();
+        
+        for (let i = 0; i < filesData.length; i++) {
+            const item = filesData[i];
+            statusMsg.innerText = `正在处理 (${i+1}/${filesData.length}): ${item.baseName}`;
+            
+            // 1. 裁剪
+            const trimmed = createTrimmedBuffer(item.buffer, item.start, item.end);
+            // 2. 归一化 (统一音量)
+            const normalized = normalizeAudio(trimmed);
+            // 3. 编码为 MP3
+            const mp3Blob = await encodeMP3(normalized);
+            
+            // 4. 加入 ZIP (使用原文件名 + .mp3)
+            zip.file(`${item.baseName}.mp3`, mp3Blob);
+        }
+
+        statusMsg.innerText = "正在生成压缩包...";
+        const content = await zip.generateAsync({type:"blob"});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = `game_audio_assets_${Date.now()}.zip`;
+        link.click();
+        
+        exportBtn.disabled = false;
+        statusMsg.innerText = "导出完成！";
+    };
+
+    function createTrimmedBuffer(originalBuffer, start, end) {
+        const sampleRate = originalBuffer.sampleRate;
+        const startOffset = Math.max(0, Math.floor(start * sampleRate));
+        const endOffset = Math.min(originalBuffer.length, Math.ceil(end * sampleRate));
+        const frameCount = endOffset - startOffset;
+        
+        const newBuffer = audioCtx.createBuffer(originalBuffer.numberOfChannels, frameCount, sampleRate);
+        for (let i = 0; i < originalBuffer.numberOfChannels; i++) {
+            newBuffer.copyToChannel(originalBuffer.getChannelData(i).slice(startOffset, endOffset), i);
+        }
+        return newBuffer;
+    }
+
+    function normalizeAudio(buffer) {
+        let maxVal = 0;
+        for (let c = 0; c < buffer.numberOfChannels; c++) {
+            const data = buffer.getChannelData(c);
+            for (let i = 0; i < data.length; i++) {
+                if (Math.abs(data[i]) > maxVal) maxVal = Math.abs(data[i]);
+            }
+        }
+        const multiplier = maxVal > 0 ? 0.95 / maxVal : 1;
+        for (let c = 0; c < buffer.numberOfChannels; c++) {
+            const data = buffer.getChannelData(c);
+            for (let i = 0; i < data.length; i++) data[i] *= multiplier;
+        }
+        return buffer;
+    }
+
+    // MP3 编码函数
+    async function encodeMP3(buffer) {
+        const channels = buffer.numberOfChannels;
+        const sampleRate = buffer.sampleRate;
+        const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128); // 128kbps
+        const mp3Data = [];
+
+        const left = buffer.getChannelData(0);
+        const right = channels > 1 ? buffer.getChannelData(1) : left;
+        
+        // 转换为 lamejs 需要的 Int16 格式
+        const toInt16 = (arr) => {
+            let l = arr.length, res = new Int16Array(l);
+            while (l--) res[l] = arr[l] < 0 ? arr[l] * 0x8000 : arr[l] * 0x7FFF;
+            return res;
+        };
+
+        const leftInt = toInt16(left);
+        const rightInt = toInt16(right);
+
+        const sampleBlockSize = 1152;
+        for (let i = 0; i < leftInt.length; i += sampleBlockSize) {
+            const lChunk = leftInt.subarray(i, i + sampleBlockSize);
+            const rChunk = rightInt.subarray(i, i + sampleBlockSize);
+            const mp3buf = mp3encoder.encodeBuffer(lChunk, rChunk);
+            if (mp3buf.length > 0) mp3Data.push(mp3buf);
+        }
+        
+        const endBuf = mp3encoder.flush();
+        if (endBuf.length > 0) mp3Data.push(endBuf);
+
+        return new Blob(mp3Data, {type: 'audio/mp3'});
+    }
+</script>
+</body>
+</html>

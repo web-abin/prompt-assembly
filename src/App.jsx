@@ -55,6 +55,16 @@ export default function App() {
               }
             />
             <Route
+              path="/audio-trim"
+              element={
+                <EmbeddedHtmlTool
+                  title="截取音频"
+                  htmlFile="截取音频.html"
+                  iframeTitle="截取音频"
+                />
+              }
+            />
+            <Route
               path="/gif-tool"
               element={
                 <Suspense fallback={<div className="route-suspense-fallback">加载中…</div>}>
