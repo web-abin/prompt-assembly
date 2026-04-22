@@ -13,6 +13,7 @@ const FORMATS = [
 ]
 
 const LAYOUT_MODES = [
+  { value: 'uniform', label: '统一尺寸（固定宽高比，居中对齐）' },
   { value: 'equal-width', label: '等宽（按宽度等比例缩放）' },
   { value: 'equal-height', label: '等高（按高度等比例缩放）' },
   { value: 'natural', label: '自然拼接（按原尺寸不缩放）' }
@@ -20,9 +21,11 @@ const LAYOUT_MODES = [
 
 export default function Spritesheet() {
   const { showToast } = useToast()
-  const [layoutMode, setLayoutMode] = useState('equal-width')
+  const [layoutMode, setLayoutMode] = useState('uniform')
   const [cellWidth, setCellWidth] = useState(128)
   const [cellHeight, setCellHeight] = useState(128)
+  const [aspectW, setAspectW] = useState(1)
+  const [aspectH, setAspectH] = useState(1)
   const [cols, setCols] = useState(10)
   const [padding, setPadding] = useState(10)
   const [jsonFormat, setJsonFormat] = useState('pixi')
@@ -170,7 +173,29 @@ export default function Spritesheet() {
     const canvas = document.createElement('canvas')
     const nextFrames = []
 
-    if (layoutMode === 'natural') {
+    if (layoutMode === 'uniform') {
+      const w = Math.max(1, parseInt(String(cellWidth), 10) || 128)
+      const aw = Math.max(1, parseInt(String(aspectW), 10) || 1)
+      const ah = Math.max(1, parseInt(String(aspectH), 10) || 1)
+      const h = Math.max(1, Math.round((w * ah) / aw))
+      canvas.width = colCount * w + (colCount - 1) * pad
+      canvas.height = rows * h + (rows - 1) * pad
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      images.forEach(({ img }, i) => {
+        const col = i % colCount
+        const row = Math.floor(i / colCount)
+        const x = col * (w + pad)
+        const y = row * (h + pad)
+        const scale = Math.min(w / img.width, h / img.height)
+        const drawW = Math.round(img.width * scale)
+        const drawH = Math.round(img.height * scale)
+        const offsetX = Math.round((w - drawW) / 2)
+        const offsetY = Math.round((h - drawH) / 2)
+        ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
+        nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
+      })
+    } else if (layoutMode === 'natural') {
       const colWidths = new Array(colCount).fill(0)
       const rowHeights = new Array(rows).fill(0)
       images.forEach(({ img }, i) => {
@@ -285,7 +310,17 @@ export default function Spritesheet() {
       'image/png',
       0.95
     )
-  }, [cellWidth, cellHeight, cols, images, layoutMode, padding, showToast])
+  }, [
+    aspectH,
+    aspectW,
+    cellWidth,
+    cellHeight,
+    cols,
+    images,
+    layoutMode,
+    padding,
+    showToast
+  ])
 
   const downloadPng = useCallback(() => {
     if (!sheetUrl) return
@@ -475,6 +510,49 @@ export default function Spritesheet() {
             ))}
           </select>
         </div>
+
+        {layoutMode === 'uniform' && (
+          <>
+            <div className="tool-field">
+              <label className="tool-label" htmlFor="spritesheet-uniform-w">
+                每个格子宽度（px，建议用二倍图）→ 高度由宽高比推导
+              </label>
+              <input
+                id="spritesheet-uniform-w"
+                className="tool-input"
+                type="number"
+                min={1}
+                value={cellWidth}
+                onChange={(e) => setCellWidth(Number(e.target.value) || 0)}
+              />
+            </div>
+            <div className="tool-field">
+              <label className="tool-label" htmlFor="spritesheet-aspect-w">
+                宽高比（默认 1 : 1，所有图片会在格子内居中对齐）
+              </label>
+              <div className={styles.aspectRow}>
+                <input
+                  id="spritesheet-aspect-w"
+                  className={`tool-input ${styles.aspectInput}`}
+                  type="number"
+                  min={1}
+                  value={aspectW}
+                  onChange={(e) => setAspectW(Number(e.target.value) || 0)}
+                  aria-label="宽高比的宽"
+                />
+                <span className={styles.aspectColon} aria-hidden>:</span>
+                <input
+                  className={`tool-input ${styles.aspectInput}`}
+                  type="number"
+                  min={1}
+                  value={aspectH}
+                  onChange={(e) => setAspectH(Number(e.target.value) || 0)}
+                  aria-label="宽高比的高"
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {layoutMode === 'equal-width' && (
           <div className="tool-field">
