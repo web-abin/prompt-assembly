@@ -66,6 +66,12 @@ export default function Landing() {
       to: '/audio-trim'
     },
     {
+      key: 'folder-quick-compress',
+      title: '快速批量压缩（文件夹）',
+      desc: '整文件夹图片快速压缩，保持批量处理效率',
+      to: '/folder-quick-compress'
+    },
+    {
       key: 'image-compress',
       title: '图片压缩',
       desc: '批量压缩画质与体积，单张下载或一键 ZIP 打包',

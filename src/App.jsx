@@ -65,6 +65,16 @@ export default function App() {
               }
             />
             <Route
+              path="/folder-quick-compress"
+              element={
+                <EmbeddedHtmlTool
+                  title="快速批量压缩（文件夹）"
+                  htmlFile="快速批量压缩(文件夹).html"
+                  iframeTitle="快速批量压缩（文件夹）"
+                />
+              }
+            />
+            <Route
               path="/gif-tool"
               element={
                 <Suspense fallback={<div className="route-suspense-fallback">加载中…</div>}>
