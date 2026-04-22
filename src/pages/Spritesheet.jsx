@@ -12,9 +12,17 @@ const FORMATS = [
   { value: 'texturepacker', label: 'TexturePacker 通用 Hash' }
 ]
 
+const LAYOUT_MODES = [
+  { value: 'equal-width', label: '等宽（按宽度等比例缩放）' },
+  { value: 'equal-height', label: '等高（按高度等比例缩放）' },
+  { value: 'natural', label: '自然拼接（按原尺寸不缩放）' }
+]
+
 export default function Spritesheet() {
   const { showToast } = useToast()
+  const [layoutMode, setLayoutMode] = useState('equal-width')
   const [cellWidth, setCellWidth] = useState(128)
+  const [cellHeight, setCellHeight] = useState(128)
   const [cols, setCols] = useState(10)
   const [padding, setPadding] = useState(10)
   const [jsonFormat, setJsonFormat] = useState('pixi')
@@ -154,66 +162,130 @@ export default function Spritesheet() {
       return
     }
 
-    const w = Math.max(1, parseInt(String(cellWidth), 10) || 128)
     const colCount = Math.max(1, parseInt(String(cols), 10) || 10)
     const pad = Math.max(0, parseInt(String(padding), 10) || 0)
     const count = images.length
     const rows = Math.ceil(count / colCount)
 
-    const h = Math.max(
-      1,
-      Math.ceil(
-        images.reduce((maxH, { img }) => {
-          const scale = Math.min(1, w / img.width)
-          const displayH = img.height * scale
-          return Math.max(maxH, displayH)
-        }, 0)
-      )
-    )
-
     const canvas = document.createElement('canvas')
-    canvas.width = colCount * w + (colCount - 1) * pad
-    canvas.height = rows * h + (rows - 1) * pad
-
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
     const nextFrames = []
-    images.forEach(({ img }, i) => {
-      const col = i % colCount
-      const row = Math.floor(i / colCount)
-      const x = col * (w + pad)
-      const y = row * (h + pad)
 
-      const scale = Math.min(1, w / img.width, h / img.height)
-      const drawW = Math.round(img.width * scale)
-      const drawH = Math.round(img.height * scale)
-      const offsetX = Math.round((w - drawW) / 2)
-      const offsetY = Math.round((h - drawH) / 2)
-
-      ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
-      nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
-    })
+    if (layoutMode === 'natural') {
+      const colWidths = new Array(colCount).fill(0)
+      const rowHeights = new Array(rows).fill(0)
+      images.forEach(({ img }, i) => {
+        const col = i % colCount
+        const row = Math.floor(i / colCount)
+        if (img.width > colWidths[col]) colWidths[col] = img.width
+        if (img.height > rowHeights[row]) rowHeights[row] = img.height
+      })
+      const colX = new Array(colCount)
+      let cx = 0
+      for (let c = 0; c < colCount; c++) {
+        colX[c] = cx
+        cx += colWidths[c] + (c < colCount - 1 ? pad : 0)
+      }
+      const rowY = new Array(rows)
+      let cy = 0
+      for (let r = 0; r < rows; r++) {
+        rowY[r] = cy
+        cy += rowHeights[r] + (r < rows - 1 ? pad : 0)
+      }
+      canvas.width = Math.max(1, cx)
+      canvas.height = Math.max(1, cy)
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      images.forEach(({ img }, i) => {
+        const col = i % colCount
+        const row = Math.floor(i / colCount)
+        const cw = colWidths[col]
+        const ch = rowHeights[row]
+        const x = colX[col]
+        const y = rowY[row]
+        const offsetX = Math.round((cw - img.width) / 2)
+        const offsetY = Math.round((ch - img.height) / 2)
+        ctx.drawImage(img, x + offsetX, y + offsetY, img.width, img.height)
+        nextFrames.push({ name: `frame-${i + 1}`, x, y, w: cw, h: ch })
+      })
+    } else if (layoutMode === 'equal-height') {
+      const h = Math.max(1, parseInt(String(cellHeight), 10) || 128)
+      const w = Math.max(
+        1,
+        Math.ceil(
+          images.reduce((maxW, { img }) => {
+            const scale = h / img.height
+            return Math.max(maxW, img.width * scale)
+          }, 0)
+        )
+      )
+      canvas.width = colCount * w + (colCount - 1) * pad
+      canvas.height = rows * h + (rows - 1) * pad
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      images.forEach(({ img }, i) => {
+        const col = i % colCount
+        const row = Math.floor(i / colCount)
+        const x = col * (w + pad)
+        const y = row * (h + pad)
+        const scale = h / img.height
+        const drawW = Math.round(img.width * scale)
+        const drawH = h
+        const offsetX = Math.round((w - drawW) / 2)
+        const offsetY = 0
+        ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
+        nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
+      })
+    } else {
+      const w = Math.max(1, parseInt(String(cellWidth), 10) || 128)
+      const h = Math.max(
+        1,
+        Math.ceil(
+          images.reduce((maxH, { img }) => {
+            const scale = w / img.width
+            return Math.max(maxH, img.height * scale)
+          }, 0)
+        )
+      )
+      canvas.width = colCount * w + (colCount - 1) * pad
+      canvas.height = rows * h + (rows - 1) * pad
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      images.forEach(({ img }, i) => {
+        const col = i % colCount
+        const row = Math.floor(i / colCount)
+        const x = col * (w + pad)
+        const y = row * (h + pad)
+        const scale = w / img.width
+        const drawW = w
+        const drawH = Math.round(img.height * scale)
+        const offsetX = 0
+        const offsetY = Math.round((h - drawH) / 2)
+        ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
+        nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
+      })
+    }
 
     if (sheetBlobUrlRef.current) {
       URL.revokeObjectURL(sheetBlobUrlRef.current)
       sheetBlobUrlRef.current = null
     }
 
+    const canvasW = canvas.width
+    const canvasH = canvas.height
     canvas.toBlob(
       (blob) => {
         if (!blob) return
         const url = URL.createObjectURL(blob)
         sheetBlobUrlRef.current = url
         setSheetUrl(url)
-        setSheetSize({ w: canvas.width, h: canvas.height })
+        setSheetSize({ w: canvasW, h: canvasH })
         setFrames(nextFrames)
         setSheetVisible(true)
       },
       'image/png',
       0.95
     )
-  }, [cellWidth, cols, images, padding, showToast])
+  }, [cellWidth, cellHeight, cols, images, layoutMode, padding, showToast])
 
   const downloadPng = useCallback(() => {
     if (!sheetUrl) return
@@ -387,18 +459,54 @@ export default function Spritesheet() {
         </div>
 
         <div className="tool-field">
-          <label className="tool-label" htmlFor="spritesheet-cell-w">
-            每个小图宽度（px，建议用二倍图）→ 高度自动等比例
+          <label className="tool-label" htmlFor="spritesheet-layout-mode">
+            拼接方式
           </label>
-          <input
-            id="spritesheet-cell-w"
-            className="tool-input"
-            type="number"
-            min={1}
-            value={cellWidth}
-            onChange={(e) => setCellWidth(Number(e.target.value) || 0)}
-          />
+          <select
+            id="spritesheet-layout-mode"
+            className="tool-select"
+            value={layoutMode}
+            onChange={(e) => setLayoutMode(e.target.value)}
+          >
+            {LAYOUT_MODES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
         </div>
+
+        {layoutMode === 'equal-width' && (
+          <div className="tool-field">
+            <label className="tool-label" htmlFor="spritesheet-cell-w">
+              每个小图宽度（px，建议用二倍图）→ 高度自动等比例
+            </label>
+            <input
+              id="spritesheet-cell-w"
+              className="tool-input"
+              type="number"
+              min={1}
+              value={cellWidth}
+              onChange={(e) => setCellWidth(Number(e.target.value) || 0)}
+            />
+          </div>
+        )}
+
+        {layoutMode === 'equal-height' && (
+          <div className="tool-field">
+            <label className="tool-label" htmlFor="spritesheet-cell-h">
+              每个小图高度（px，建议用二倍图）→ 宽度自动等比例
+            </label>
+            <input
+              id="spritesheet-cell-h"
+              className="tool-input"
+              type="number"
+              min={1}
+              value={cellHeight}
+              onChange={(e) => setCellHeight(Number(e.target.value) || 0)}
+            />
+          </div>
+        )}
 
         <div className="tool-field">
           <label className="tool-label" htmlFor="spritesheet-cols">
