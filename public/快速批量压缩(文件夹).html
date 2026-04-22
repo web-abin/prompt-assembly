@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图片批量处理工具 - 支持排序与结构保留</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f5f5f7; padding: 20px; color: #1d1d1f; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .upload-btn { background: #0071e3; color: white; padding: 10px 24px; border-radius: 20px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .upload-btn:hover { background: #0077ed; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+        th { background: #fafafa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; font-size: 14px; color: #86868b; }
+        th.sortable { cursor: pointer; color: #0071e3; transition: 0.2s; }
+        th.sortable:hover { background: #f0f7ff; }
+        td { padding: 12px; border-bottom: 1px solid #f5f5f7; font-size: 14px; word-break: break-all; }
+        
+        .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e5e5; }
+        .dimension-input { width: 70px; padding: 6px; border: 1px solid #d2d2d7; border-radius: 4px; outline: none; }
+        .dimension-input:focus { border-color: #0071e3; ring: 2px #c6e2ff; }
+        
+        .download-btn { width: 100%; background: #34c759; color: white; padding: 16px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 30px; transition: 0.3s; }
+        .download-btn:hover { background: #28a745; transform: translateY(-1px); }
+        .download-btn:disabled { background: #d2d2d7; cursor: not-allowed; transform: none; }
+        
+        .path-text { font-size: 12px; color: #86868b; display: block; margin-top: 4px; }
+        #status { text-align: center; margin-top: 15px; font-size: 14px; color: #1d1d1f; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-actions">
+        <h2>图片批量处理 & 压缩</h2>
+        <label class="upload-btn">
+            选择文件夹
+            <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;">
+        </label>
+    </div>
+
+    <table id="imageTable">
+        <thead>
+            <tr>
+                <th style="width: 80px;">预览</th>
+                <th style="width: 30%;">路径及名称</th>
+                <th class="sortable" id="sortSize" style="width: 120px;">大小 ↕</th>
+                <th style="width: 110px;">宽 (px)</th>
+                <th style="width: 110px;">高 (px)</th>
+                <th style="width: 100px;">原始比例</th>
+            </tr>
+        </thead>
+        <tbody id="fileListBody"></tbody>
+    </table>
+
+    <button id="downloadBtn" class="download-btn" disabled>处理并导出压缩包 (.zip)</button>
+    <div id="status">准备就绪，请上传文件夹</div>
+</div>
+
+<script>
+    const folderInput = document.getElementById('folderInput');
+    const fileListBody = document.getElementById('fileListBody');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const status = document.getElementById('status');
+    const sortSizeBtn = document.getElementById('sortSize');
+    
+    let imageFiles = []; 
+    let sortAsc = false;
+
+    // 格式化文件大小
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    folderInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+        if (files.length === 0) return;
+        
+        status.innerText = "正在读取图片信息...";
+        imageFiles = [];
+        
+        for (const file of files) {
+            const url = URL.createObjectURL(file);
+            const dimensions = await getImageDimensions(url);
+            
+            imageFiles.push({
+                file,
+                url,
+                name: file.name,
+                path: file.webkitRelativePath,
+                size: file.size,
+                originalW: dimensions.w,
+                originalH: dimensions.h,
+                currentW: dimensions.w,
+                currentH: dimensions.h,
+                ratio: dimensions.w / dimensions.h
+            });
+        }
+        
+        renderTable();
+        downloadBtn.disabled = false;
+        status.innerText = `已成功加载 ${imageFiles.length} 张图片`;
+    });
+
+    async function getImageDimensions(url) {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => resolve({ w: img.width, h: img.height });
+            img.src = url;
+        });
+    }
+
+    // 渲染表格
+    function renderTable() {
+        fileListBody.innerHTML = '';
+        imageFiles.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><img src="${item.url}" class="preview-img"></td>
+                <td>
+                    <strong>${item.name}</strong>
+                    <span class="path-text">${item.path}</span>
+                </td>
+                <td>${formatBytes(item.size)}</td>
+                <td><input type="number" class="dimension-input width-in" value="${item.currentW}" data-index="${index}"></td>
+                <td><input type="number" class="dimension-input height-in" value="${item.currentH}" data-index="${index}"></td>
+                <td style="color: #86868b; font-size: 12px;">1 : ${(1/item.ratio).toFixed(2)}</td>
+            `;
+
+            const widthIn = tr.querySelector('.width-in');
+            const heightIn = tr.querySelector('.height-in');
+
+            widthIn.addEventListener('blur', (e) => {
+                const idx = e.target.dataset.index;
+                const newW = parseInt(e.target.value);
+                imageFiles[idx].currentW = newW;
+                imageFiles[idx].currentH = Math.round(newW / imageFiles[idx].ratio);
+                heightIn.value = imageFiles[idx].currentH;
+            });
+
+            heightIn.addEventListener('blur', (e) => {
+                const idx = e.target.dataset.index;
+                const newH = parseInt(e.target.value);
+                imageFiles[idx].currentH = newH;
+                imageFiles[idx].currentW = Math.round(newH * imageFiles[idx].ratio);
+                widthIn.value = imageFiles[idx].currentW;
+            });
+
+            fileListBody.appendChild(tr);
+        });
+    }
+
+    // 排序逻辑
+    sortSizeBtn.onclick = () => {
+        sortAsc = !sortAsc;
+        imageFiles.sort((a, b) => sortAsc ? a.size - b.size : b.size - a.size);
+        renderTable();
+        status.innerText = `已按大小${sortAsc ? '从小到大' : '从大到小'}排序`;
+    };
+
+    // 下载逻辑
+    downloadBtn.onclick = async () => {
+        downloadBtn.disabled = true;
+        const zip = new JSZip();
+        
+        for (let i = 0; i < imageFiles.length; i++) {
+            const item = imageFiles[i];
+            status.innerText = `正在处理 (${i + 1}/${imageFiles.length}): ${item.name}`;
+            
+            const options = {
+                maxWidthOrHeight: Math.max(item.currentW, item.currentH),
+                useWebWorker: true,
+                initialQuality: 0.95
+            };
+
+            try {
+                // 如果尺寸变了，缩放；如果没变，执行极高质量压缩
+                const compressedFile = await imageCompression(item.file, options);
+                zip.file(item.path, compressedFile);
+            } catch (error) {
+                zip.file(item.path, item.file);
+            }
+        }
+
+        status.innerText = "正在打包...";
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `assets_export_${Date.now()}.zip`;
+        a.click();
+        
+        downloadBtn.disabled = false;
+        status.innerText = "处理完成，请检查下载任务！";
+    };
+</script>
+
+</body>
+</html>
