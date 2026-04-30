@@ -73,7 +73,7 @@ export default function Spritesheet() {
         await new Promise((r) => {
           img.onload = r
         })
-        loaded.push({ img, revoke: u })
+        loaded.push({ img, revoke: u, name: '' })
       }
       setImages(loaded)
       setSheetVisible(false)
@@ -83,6 +83,16 @@ export default function Spritesheet() {
     },
     [showToast]
   )
+
+  const handleNameChange = useCallback((index) => (e) => {
+    const value = e.target.value
+    setImages((prev) => {
+      if (!prev[index]) return prev
+      const next = [...prev]
+      next[index] = { ...next[index], name: value }
+      return next
+    })
+  }, [])
 
   const moveImage = useCallback((index, delta) => {
     setImages((prev) => {
@@ -173,6 +183,11 @@ export default function Spritesheet() {
     const canvas = document.createElement('canvas')
     const nextFrames = []
 
+    const frameName = (entry, i) => {
+      const trimmed = (entry.name || '').trim()
+      return trimmed || `frame-${i + 1}`
+    }
+
     if (layoutMode === 'uniform') {
       const w = Math.max(1, parseInt(String(cellWidth), 10) || 128)
       const aw = Math.max(1, parseInt(String(aspectW), 10) || 1)
@@ -182,7 +197,8 @@ export default function Spritesheet() {
       canvas.height = rows * h + (rows - 1) * pad
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach(({ img }, i) => {
+      images.forEach((entry, i) => {
+        const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
         const x = col * (w + pad)
@@ -193,7 +209,7 @@ export default function Spritesheet() {
         const offsetX = Math.round((w - drawW) / 2)
         const offsetY = Math.round((h - drawH) / 2)
         ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
-        nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
+        nextFrames.push({ name: frameName(entry, i), x, y, w, h })
       })
     } else if (layoutMode === 'natural') {
       const colWidths = new Array(colCount).fill(0)
@@ -220,7 +236,8 @@ export default function Spritesheet() {
       canvas.height = Math.max(1, cy)
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach(({ img }, i) => {
+      images.forEach((entry, i) => {
+        const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
         const cw = colWidths[col]
@@ -230,7 +247,7 @@ export default function Spritesheet() {
         const offsetX = Math.round((cw - img.width) / 2)
         const offsetY = Math.round((ch - img.height) / 2)
         ctx.drawImage(img, x + offsetX, y + offsetY, img.width, img.height)
-        nextFrames.push({ name: `frame-${i + 1}`, x, y, w: cw, h: ch })
+        nextFrames.push({ name: frameName(entry, i), x, y, w: cw, h: ch })
       })
     } else if (layoutMode === 'equal-height') {
       const h = Math.max(1, parseInt(String(cellHeight), 10) || 128)
@@ -247,7 +264,8 @@ export default function Spritesheet() {
       canvas.height = rows * h + (rows - 1) * pad
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach(({ img }, i) => {
+      images.forEach((entry, i) => {
+        const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
         const x = col * (w + pad)
@@ -258,7 +276,7 @@ export default function Spritesheet() {
         const offsetX = Math.round((w - drawW) / 2)
         const offsetY = 0
         ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
-        nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
+        nextFrames.push({ name: frameName(entry, i), x, y, w, h })
       })
     } else {
       const w = Math.max(1, parseInt(String(cellWidth), 10) || 128)
@@ -275,7 +293,8 @@ export default function Spritesheet() {
       canvas.height = rows * h + (rows - 1) * pad
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach(({ img }, i) => {
+      images.forEach((entry, i) => {
+        const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
         const x = col * (w + pad)
@@ -286,7 +305,7 @@ export default function Spritesheet() {
         const offsetX = 0
         const offsetY = Math.round((h - drawH) / 2)
         ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH)
-        nextFrames.push({ name: `frame-${i + 1}`, x, y, w, h })
+        nextFrames.push({ name: frameName(entry, i), x, y, w, h })
       })
     }
 
@@ -418,7 +437,7 @@ export default function Spritesheet() {
           {images.length > 0 && (
             <div className={styles.orderBlock}>
               <div className={styles.orderHint}>
-                合成顺序（影响雪碧图格子与 frame 编号）：可拖左侧手柄或上移/下移；左侧序号为可编辑序号，改为目标位置后失焦即与对调。
+                合成顺序（影响雪碧图格子与 frame 编号）：可拖左侧手柄或上移/下移；左侧序号为可编辑序号，改为目标位置后失焦即与对调。可填写名称作为导出 JSON 中的 key，留空则用 frame-序号。
               </div>
               <div className={styles.orderList}>
                 {images.map((entry, index) => (
@@ -465,6 +484,14 @@ export default function Spritesheet() {
                       width={40}
                       height={40}
                       draggable={false}
+                    />
+                    <input
+                      type="text"
+                      value={entry.name}
+                      placeholder={`frame-${index + 1}`}
+                      className={`tool-input ${styles.orderNameInput}`}
+                      aria-label={`第 ${index + 1} 张的名称（导出 JSON 的 key）`}
+                      onChange={handleNameChange(index)}
                     />
                     <div className={styles.orderActions}>
                       <button
