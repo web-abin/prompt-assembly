@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import JSZip from 'jszip'
 import ToolPageLayout from '../components/ToolPageLayout'
 import { useToast } from '../context/ToastContext'
 
@@ -53,6 +54,14 @@ export default function BatchResize() {
       if (previewSrc) URL.revokeObjectURL(previewSrc)
     }
   }, [previewSrc])
+
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((u) => {
+        if (u.startsWith('blob:')) URL.revokeObjectURL(u)
+      })
+    }
+  }, [previewUrls])
 
   const getPos = (e) => {
     const el = imgRef.current
@@ -121,15 +130,20 @@ export default function BatchResize() {
         }
       : null
 
-    const nextPreview = []
+    const results = []
     for (const f of files) {
       const img = new Image()
       const objectUrl = URL.createObjectURL(f)
       img.src = objectUrl
-      await new Promise((resolve, reject) => {
-        img.onload = resolve
-        img.onerror = reject
-      })
+      try {
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+        })
+      } catch {
+        URL.revokeObjectURL(objectUrl)
+        continue
+      }
 
       const srcX = rel ? rel.x * img.width : 0
       const srcY = rel ? rel.y * img.height : 0
@@ -143,17 +157,41 @@ export default function BatchResize() {
       const ctx = canvas.getContext('2d')
       ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, targetW, outH)
 
-      const url = canvas.toDataURL('image/png')
-      nextPreview.push(url)
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, 'image/png')
+      )
       URL.revokeObjectURL(objectUrl)
+      if (!blob) continue
 
       const baseName = f.name.replace(/\.[^.]+$/, '')
+      results.push({ name: `resized-${baseName}.png`, blob })
+    }
+
+    if (results.length === 0) {
+      showToast('图片处理失败')
+      return
+    }
+
+    setPreviewUrls(results.map((r) => URL.createObjectURL(r.blob)))
+
+    if (results.length === 1) {
+      const url = URL.createObjectURL(results[0].blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `resized-${baseName}.png`
+      a.download = results[0].name
       a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } else {
+      const zip = new JSZip()
+      results.forEach((r) => zip.file(r.name, r.blob))
+      const content = await zip.generateAsync({ type: 'blob' })
+      const zipUrl = URL.createObjectURL(content)
+      const a = document.createElement('a')
+      a.href = zipUrl
+      a.download = `resized_images_${Date.now()}.zip`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(zipUrl), 1000)
     }
-    setPreviewUrls(nextPreview)
   }, [showToast, width, selection, displaySize, hasCrop])
 
   return (
