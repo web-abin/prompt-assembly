@@ -173,6 +173,22 @@
   background: #fee2e2;
 }
 
+.btnAdvanced {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #c5d4f1;
+  background: #eef3fe;
+  color: #4e82f1;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.btnAdvanced:hover {
+  background: #dde7fc;
+}
+
 .controls {
   grid-column: 1 / -1;
   display: grid;
@@ -298,6 +314,154 @@
   margin-top: 10px;
   text-align: center;
   min-height: 1.5em;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 22px;
+  width: 100%;
+  max-width: 720px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #333;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+
+.modal *,
+.modal *::before,
+.modal *::after {
+  box-sizing: border-box;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.modalClose:hover {
+  color: #333;
+}
+
+.waveContainer {
+  position: relative;
+  background: #f5f7fb;
+  border: 1px solid #eef1f6;
+  border-radius: 6px;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.playhead {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: #ef4444;
+  pointer-events: none;
+  transform: translateX(-1px);
+}
+
+.scrubber {
+  width: 100%;
+  cursor: pointer;
+  margin: 0;
+}
+
+.modalRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #444;
+}
+
+.playBtn {
+  padding: 8px 22px;
+  background: #4e82f1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 80px;
+  transition: 0.2s;
+}
+
+.playBtn:hover {
+  background: #3b6cd4;
+}
+
+.rateBtn {
+  padding: 5px 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #444;
+  transition: 0.2s;
+}
+
+.rateBtn:hover {
+  border-color: #4e82f1;
+  color: #4e82f1;
+}
+
+.rateBtnActive {
+  background: #4e82f1;
+  color: #fff;
+  border-color: #4e82f1;
+}
+
+.rateBtnActive:hover {
+  background: #3b6cd4;
+  color: #fff;
+}
+
+.timeText {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: #555;
+  margin-left: auto;
 }
 
 @media (max-width: 720px) {
