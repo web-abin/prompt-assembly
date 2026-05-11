@@ -16,6 +16,7 @@ import './App.css'
 
 const GifTool = lazy(() => import('./pages/GifTool'))
 const ImageCompress = lazy(() => import('./pages/ImageCompress'))
+const AudioTool = lazy(() => import('./pages/AudioTool'))
 
 function DetailRoute() {
   const { id } = useParams()
@@ -87,6 +88,14 @@ export default function App() {
               element={
                 <Suspense fallback={<div className="route-suspense-fallback">加载中…</div>}>
                   <ImageCompress />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/audio-tool"
+              element={
+                <Suspense fallback={<div className="route-suspense-fallback">加载中…</div>}>
+                  <AudioTool />
                 </Suspense>
               }
             />

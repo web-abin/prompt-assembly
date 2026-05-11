@@ -60,6 +60,12 @@ export default function Landing() {
       to: '/gif-tool'
     },
     {
+      key: 'audio-tool',
+      title: '音频批量处理',
+      desc: '批量调音量、去前后空白、裁剪区间、转格式并打包导出',
+      to: '/audio-tool'
+    },
+    {
       key: 'audio-trim',
       title: '截取音频',
       desc: '本地裁剪音频片段，导出常见音频格式',
