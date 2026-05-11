@@ -32,11 +32,11 @@
 
     .status{color:#666;margin:10px 0}
 
-    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;z-index:999}
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;z-index:9999}
     .modal.show{display:flex}
     .modal-content{position:relative}
-    #demoCanvas{display:block;max-width:90vw;max-height:90vh;background:#000}
-    .close-btn{position:absolute;top:-40px;right:0;background:#ff4444;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer}
+    #demoCanvas{display:block;max-width:90vw;max-height:85vh;background:#000;border-radius:8px}
+    .close-btn{position:absolute;top:-16px;right:-16px;width:36px;height:36px;padding:0;background:#ff4444;color:white;border:none;border-radius:50%;cursor:pointer;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
     .back-home{margin:0 0 16px}
     .back-home a{display:inline-block;padding:8px 14px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#2563eb;text-decoration:none;font-size:14px;font-weight:500}
     .back-home a:hover{background:#eff6ff}
@@ -72,7 +72,7 @@
 
 <div class="modal" id="modal">
   <div class="modal-content">
-    <button class="close-btn" id="closeModal">关闭</button>
+    <button class="close-btn" id="closeModal" aria-label="关闭">✕</button>
     <canvas id="demoCanvas"></canvas>
   </div>
 </div>
@@ -278,10 +278,14 @@ function startAnimation(sources) {
 }
 
 // 关闭弹窗
-closeModal.onclick = () => {
+function hideModal() {
   modal.classList.remove('show');
   clearTimeout(animId);
-};
+}
+closeModal.onclick = hideModal;
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) hideModal();
+});
 
 // 一键下载选中序列帧 ZIP
 downloadAllBtn.onclick = async () => {

@@ -2100,7 +2100,7 @@ html.dark .tool-panel {
 .tool-modal {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2114,16 +2114,23 @@ html.dark .tool-panel {
 }
 .tool-modal-close {
   position: absolute;
-  top: -44px;
-  right: 0;
-  padding: 8px 14px;
+  top: -16px;
+  right: -16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 50%;
   background: #ef4444;
   color: #fff;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .tool-modal-close:hover {
   filter: brightness(1.08);
@@ -2180,6 +2187,73 @@ html.dark .tool-follow-hint {
   .tool-btn-primary,
   .tool-btn-secondary {
     width: 100%;
+  }
+}
+
+.batch-resize-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 1.4fr);
+  gap: 22px;
+  align-items: start;
+}
+.batch-resize-controls {
+  min-width: 0;
+}
+.batch-resize-preview {
+  min-width: 0;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--code-bg);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+}
+.batch-resize-preview-empty {
+  font-size: 13px;
+  color: var(--text);
+  text-align: center;
+  padding: 24px 12px;
+}
+.batch-resize-preview-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  user-select: none;
+  touch-action: none;
+  cursor: crosshair;
+  line-height: 0;
+}
+.batch-resize-preview-img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  height: auto;
+  width: auto;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.batch-resize-selection {
+  position: absolute;
+  border: 1.5px dashed #3b82f6;
+  background: rgba(59, 130, 246, 0.18);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  pointer-events: none;
+}
+.batch-resize-crop-info {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.55;
+}
+.batch-resize-clear {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+@media (max-width: 760px) {
+  .batch-resize-layout {
+    grid-template-columns: 1fr;
   }
 }
 
