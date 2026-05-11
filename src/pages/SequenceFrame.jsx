@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import ToolPageLayout from '../components/ToolPageLayout'
@@ -305,21 +306,29 @@ export default function SequenceFrame() {
         </div>
       </div>
 
-      {modalOpen && (
-        <div
-          className="tool-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="序列帧预览"
-        >
-          <div className="tool-modal-inner">
-            <button type="button" className="tool-modal-close" onClick={closeModal}>
-              关闭
-            </button>
-            <canvas ref={demoCanvasRef} className="tool-modal-canvas" />
-          </div>
-        </div>
-      )}
+      {modalOpen &&
+        createPortal(
+          <div
+            className="tool-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="序列帧预览"
+            onClick={closeModal}
+          >
+            <div className="tool-modal-inner" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="tool-modal-close"
+                onClick={closeModal}
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+              <canvas ref={demoCanvasRef} className="tool-modal-canvas" />
+            </div>
+          </div>,
+          document.body,
+        )}
     </ToolPageLayout>
   )
 }
