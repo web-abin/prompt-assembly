@@ -379,6 +379,254 @@ function fmtSec(s) {
   return s.toFixed(3)
 }
 
+function fmtClock(s) {
+  if (!Number.isFinite(s) || s < 0) s = 0
+  const totalMs = Math.floor(s * 1000)
+  const min = Math.floor(totalMs / 60000)
+  const sec = Math.floor((totalMs % 60000) / 1000)
+  const ms = Math.floor((totalMs % 1000) / 10)
+  return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${String(ms).padStart(2, '0')}`
+}
+
+const RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
+function AdvancedPreviewModal({ item, onClose }) {
+  const snapshotRef = useRef(null)
+  if (snapshotRef.current === null) {
+    snapshotRef.current = {
+      removeSilence: item.removeSilence,
+      start: item.start,
+      end: item.end
+    }
+  }
+
+  const processedBuffer = useMemo(() => {
+    return buildProcessedBuffer(item.buffer, {
+      ...snapshotRef.current,
+      volume: 100
+    })
+  }, [item.buffer])
+
+  const duration = processedBuffer.duration
+  const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [rate, setRate] = useState(1)
+  const [loop, setLoop] = useState(false)
+
+  const ctxRef = useRef(null)
+  const sourceRef = useRef(null)
+  const gainRef = useRef(null)
+  const startTimeRef = useRef(0)
+  const offsetRef = useRef(0)
+  const rafRef = useRef(0)
+  const loopRef = useRef(loop)
+  const rateRef = useRef(rate)
+  loopRef.current = loop
+  rateRef.current = rate
+
+  const stopSource = useCallback(() => {
+    if (sourceRef.current) {
+      try { sourceRef.current.onended = null } catch { /* ignore */ }
+      try { sourceRef.current.stop() } catch { /* ignore */ }
+      try { sourceRef.current.disconnect() } catch { /* ignore */ }
+      sourceRef.current = null
+    }
+    cancelAnimationFrame(rafRef.current)
+    rafRef.current = 0
+  }, [])
+
+  useEffect(() => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const gain = ctx.createGain()
+    gain.gain.value = item.volume / 100
+    gain.connect(ctx.destination)
+    ctxRef.current = ctx
+    gainRef.current = gain
+    return () => {
+      stopSource()
+      try { ctx.close() } catch { /* ignore */ }
+      ctxRef.current = null
+      gainRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (gainRef.current) gainRef.current.gain.value = item.volume / 100
+  }, [item.volume])
+
+  const startPlayback = useCallback((fromOffset) => {
+    const ctx = ctxRef.current
+    const gain = gainRef.current
+    if (!ctx || !gain || !processedBuffer) return
+    stopSource()
+
+    const source = ctx.createBufferSource()
+    source.buffer = processedBuffer
+    source.loop = loopRef.current
+    source.playbackRate.value = rateRef.current
+    source.connect(gain)
+    source.onended = () => {
+      if (sourceRef.current !== source) return
+      sourceRef.current = null
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
+      offsetRef.current = 0
+      setPlaying(false)
+      setCurrentTime(0)
+    }
+
+    const offset = Math.max(0, Math.min(
+      fromOffset != null ? fromOffset : offsetRef.current,
+      duration
+    ))
+    source.start(0, loopRef.current ? offset % duration : offset)
+    sourceRef.current = source
+    startTimeRef.current = ctx.currentTime
+    offsetRef.current = offset
+
+    const tick = () => {
+      const c = ctxRef.current
+      const s = sourceRef.current
+      if (!c || !s) return
+      const elapsed = (c.currentTime - startTimeRef.current) * (s.playbackRate.value || 1)
+      let pos = offsetRef.current + elapsed
+      if (loopRef.current && duration > 0) {
+        pos = ((pos % duration) + duration) % duration
+      } else if (pos > duration) {
+        pos = duration
+      }
+      setCurrentTime(pos)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    setPlaying(true)
+  }, [processedBuffer, duration, stopSource])
+
+  const pause = useCallback(() => {
+    const ctx = ctxRef.current
+    const source = sourceRef.current
+    if (!ctx || !source) return
+    const elapsed = (ctx.currentTime - startTimeRef.current) * (source.playbackRate.value || 1)
+    let pos = offsetRef.current + elapsed
+    if (loopRef.current && duration > 0) {
+      pos = ((pos % duration) + duration) % duration
+    }
+    pos = Math.max(0, Math.min(pos, duration))
+    stopSource()
+    offsetRef.current = pos
+    setCurrentTime(pos)
+    setPlaying(false)
+  }, [duration, stopSource])
+
+  const togglePlay = useCallback(() => {
+    if (playing) pause()
+    else startPlayback()
+  }, [playing, pause, startPlayback])
+
+  const seek = useCallback((t) => {
+    const clamped = Math.max(0, Math.min(Number(t) || 0, duration))
+    if (playing) {
+      startPlayback(clamped)
+    } else {
+      offsetRef.current = clamped
+      setCurrentTime(clamped)
+    }
+  }, [duration, playing, startPlayback])
+
+  useEffect(() => {
+    const source = sourceRef.current
+    const ctx = ctxRef.current
+    if (!source || !ctx) return
+    const elapsed = (ctx.currentTime - startTimeRef.current) * (source.playbackRate.value || 1)
+    let pos = offsetRef.current + elapsed
+    if (loopRef.current && duration > 0) {
+      pos = ((pos % duration) + duration) % duration
+    }
+    offsetRef.current = Math.max(0, Math.min(pos, duration))
+    startTimeRef.current = ctx.currentTime
+    source.playbackRate.value = rate
+  }, [rate, duration])
+
+  useEffect(() => {
+    if (sourceRef.current) sourceRef.current.loop = loop
+  }, [loop])
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const playheadLeft = duration > 0 ? `${(currentTime / duration) * 100}%` : '0%'
+
+  return (
+    <div className={styles.modalBackdrop} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <div className={styles.modalTitle} title={item.originalName}>
+            高级试听 — {item.originalName}
+          </div>
+          <button type="button" className={styles.modalClose} onClick={onClose} aria-label="关闭">×</button>
+        </div>
+
+        <div className={styles.waveContainer}>
+          <Waveform
+            buffer={processedBuffer}
+            start={0}
+            end={duration}
+            removeSilence={false}
+            silenceRange={null}
+            volume={item.volume}
+          />
+          <div className={styles.playhead} style={{ left: playheadLeft }} />
+        </div>
+
+        <input
+          className={styles.scrubber}
+          type="range"
+          min={0}
+          max={duration}
+          step={0.01}
+          value={Math.min(currentTime, duration)}
+          onChange={(e) => seek(Number(e.target.value))}
+        />
+
+        <div className={styles.modalRow}>
+          <button type="button" className={styles.playBtn} onClick={togglePlay}>
+            {playing ? '暂停' : '播放'}
+          </button>
+          <label className={styles.checkRow}>
+            <input
+              type="checkbox"
+              checked={loop}
+              onChange={(e) => setLoop(e.target.checked)}
+            />
+            循环播放
+          </label>
+          <span className={styles.timeText}>
+            {fmtClock(currentTime)} / {fmtClock(duration)}
+          </span>
+        </div>
+
+        <div className={styles.modalRow}>
+          <span style={{ fontWeight: 500, color: '#444' }}>倍速</span>
+          {RATE_OPTIONS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={r === rate ? `${styles.rateBtn} ${styles.rateBtnActive}` : styles.rateBtn}
+              onClick={() => setRate(r)}
+            >
+              {r}x
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 let _idSeq = 1
 
 export default function AudioTool() {
@@ -390,6 +638,7 @@ export default function AudioTool() {
   const [status, setStatus] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const [playingId, setPlayingId] = useState(null)
+  const [advancedItemId, setAdvancedItemId] = useState(null)
   const previewRef = useRef({ ctx: null, source: null, gain: null, itemId: null })
 
   const stopPreview = useCallback(() => {
@@ -473,6 +722,7 @@ export default function AudioTool() {
   const removeItem = useCallback((id) => {
     setItems((prev) => prev.filter((it) => it.id !== id))
     if (previewRef.current.itemId === id) stopPreview()
+    setAdvancedItemId((cur) => (cur === id ? null : cur))
   }, [stopPreview])
 
   const previewItem = useCallback((item) => {
@@ -645,6 +895,16 @@ export default function AudioTool() {
                       <button type="button" className={styles.btnGhost} onClick={() => previewItem(item)}>
                         {playing ? '停止' : '试听'}
                       </button>
+                      <button
+                        type="button"
+                        className={styles.btnAdvanced}
+                        onClick={() => {
+                          stopPreview()
+                          setAdvancedItemId(item.id)
+                        }}
+                      >
+                        高级试听
+                      </button>
                       <button type="button" className={styles.btnDanger} onClick={() => removeItem(item.id)}>
                         删除
                       </button>
@@ -762,6 +1022,17 @@ export default function AudioTool() {
           <div className={styles.status}>{status}</div>
         </div>
       </div>
+      {advancedItemId != null && (() => {
+        const target = items.find((it) => it.id === advancedItemId)
+        if (!target) return null
+        return (
+          <AdvancedPreviewModal
+            key={target.id}
+            item={target}
+            onClose={() => setAdvancedItemId(null)}
+          />
+        )
+      })()}
     </ToolPageLayout>
   )
 }
