@@ -389,18 +389,24 @@ export default function AudioTool() {
   const [processing, setProcessing] = useState(false)
   const [status, setStatus] = useState('')
   const [dragOver, setDragOver] = useState(false)
-  const previewRef = useRef({ ctx: null, source: null, itemId: null })
+  const [playingId, setPlayingId] = useState(null)
+  const previewRef = useRef({ ctx: null, source: null, gain: null, itemId: null })
 
   const stopPreview = useCallback(() => {
     const p = previewRef.current
     if (p.source) {
+      try { p.source.onended = null } catch { /* ignore */ }
       try { p.source.stop() } catch { /* ignore */ }
       try { p.source.disconnect() } catch { /* ignore */ }
+    }
+    if (p.gain) {
+      try { p.gain.disconnect() } catch { /* ignore */ }
     }
     if (p.ctx) {
       try { p.ctx.close() } catch { /* ignore */ }
     }
-    previewRef.current = { ctx: null, source: null, itemId: null }
+    previewRef.current = { ctx: null, source: null, gain: null, itemId: null }
+    setPlayingId(null)
   }, [])
 
   useEffect(() => {
@@ -432,7 +438,7 @@ export default function AudioTool() {
           duration,
           silenceRange,
           volume: 100,
-          removeSilence: false,
+          removeSilence: true,
           start: 0,
           end: Number(duration.toFixed(3))
         }
@@ -480,26 +486,40 @@ export default function AudioTool() {
         removeSilence: item.removeSilence,
         start: item.start,
         end: item.end,
-        volume: item.volume
+        volume: 100
       })
       const ctx = new (window.AudioContext || window.webkitAudioContext)()
       const source = ctx.createBufferSource()
       source.buffer = processed
-      source.connect(ctx.destination)
+      const gainNode = ctx.createGain()
+      gainNode.gain.value = item.volume / 100
+      source.connect(gainNode)
+      gainNode.connect(ctx.destination)
       source.onended = () => {
         if (previewRef.current.itemId === item.id) {
-          previewRef.current = { ctx: null, source: null, itemId: null }
-          setItems((prev) => [...prev])
+          try { ctx.close() } catch { /* ignore */ }
+          previewRef.current = { ctx: null, source: null, gain: null, itemId: null }
+          setPlayingId(null)
         }
       }
       source.start()
-      previewRef.current = { ctx, source, itemId: item.id }
-      setItems((prev) => [...prev])
+      previewRef.current = { ctx, source, gain: gainNode, itemId: item.id }
+      setPlayingId(item.id)
     } catch (err) {
       console.error(err)
       showToast('试听失败')
     }
   }, [showToast, stopPreview])
+
+  useEffect(() => {
+    if (playingId == null) return
+    const item = items.find((it) => it.id === playingId)
+    const gain = previewRef.current.gain
+    if (!item || !gain) return
+    try {
+      gain.gain.value = item.volume / 100
+    } catch { /* ignore */ }
+  }, [items, playingId])
 
   const handleExport = useCallback(async () => {
     if (items.length === 0) {
@@ -605,7 +625,7 @@ export default function AudioTool() {
           {items.length > 0 && (
             <div className={styles.list}>
               {items.map((item, index) => {
-                const playing = previewRef.current.itemId === item.id
+                const playing = playingId === item.id
                 return (
                   <div key={item.id} className={styles.item}>
                     <div className={styles.itemHead}>
