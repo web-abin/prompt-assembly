@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import ToolPageLayout from '../components/ToolPageLayout'
 import { useToast } from '../context/ToastContext'
 import styles from './Spritesheet.module.css'
+
+const DEFAULT_PLAY_FPS = 12
+const MIN_PLAY_FPS = 1
+const MAX_PLAY_FPS = 60
 
 const FORMATS = [
   { value: 'normal', label: '普通数组格式' },
@@ -39,6 +44,14 @@ export default function Spritesheet() {
   const dragFromRef = useRef(null)
   const [dragOverIndex, setDragOverIndex] = useState(null)
   const [draggingIndex, setDraggingIndex] = useState(null)
+  const [playbackOpen, setPlaybackOpen] = useState(false)
+  const [playbackFpsInput, setPlaybackFpsInput] = useState(String(DEFAULT_PLAY_FPS))
+  const [playbackIndex, setPlaybackIndex] = useState(0)
+  const playbackCanvasRef = useRef(null)
+  const playbackTimerRef = useRef(null)
+  const playbackIndexRef = useRef(0)
+  const playbackImageRef = useRef(null)
+  const playbackFpsRef = useRef(DEFAULT_PLAY_FPS)
 
   useEffect(() => {
     imagesRef.current = images
@@ -48,8 +61,96 @@ export default function Spritesheet() {
     return () => {
       if (sheetBlobUrlRef.current) URL.revokeObjectURL(sheetBlobUrlRef.current)
       imagesRef.current.forEach((p) => URL.revokeObjectURL(p.revoke))
+      if (playbackTimerRef.current) clearTimeout(playbackTimerRef.current)
     }
   }, [])
+
+  const playbackCanvasSize = useMemo(() => {
+    if (!frames.length) return { w: 0, h: 0 }
+    let mw = 0
+    let mh = 0
+    frames.forEach((f) => {
+      if (f.w > mw) mw = f.w
+      if (f.h > mh) mh = f.h
+    })
+    return { w: mw, h: mh }
+  }, [frames])
+
+  const resolvePlaybackFps = useCallback(() => {
+    const n = Number(playbackFpsInput)
+    if (!Number.isFinite(n) || n < MIN_PLAY_FPS) return MIN_PLAY_FPS
+    if (n > MAX_PLAY_FPS) return MAX_PLAY_FPS
+    return Math.floor(n)
+  }, [playbackFpsInput])
+
+  const openPlayback = useCallback(() => {
+    if (!frames.length || !sheetUrl) {
+      showToast('请先生成精灵图')
+      return
+    }
+    playbackFpsRef.current = resolvePlaybackFps()
+    setPlaybackFpsInput(String(playbackFpsRef.current))
+    playbackIndexRef.current = 0
+    setPlaybackIndex(0)
+    setPlaybackOpen(true)
+  }, [frames.length, resolvePlaybackFps, sheetUrl, showToast])
+
+  const closePlayback = useCallback(() => {
+    if (playbackTimerRef.current) {
+      clearTimeout(playbackTimerRef.current)
+      playbackTimerRef.current = null
+    }
+    playbackImageRef.current = null
+    setPlaybackOpen(false)
+  }, [])
+
+  useEffect(() => {
+    if (!playbackOpen) return undefined
+    let cancelled = false
+    const total = frames.length
+
+    const drawFrame = (i) => {
+      const canvas = playbackCanvasRef.current
+      const img = playbackImageRef.current
+      if (!canvas || !img || !frames[i]) return
+      const ctx = canvas.getContext('2d')
+      const f = frames[i]
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const dx = Math.round((canvas.width - f.w) / 2)
+      const dy = Math.round((canvas.height - f.h) / 2)
+      ctx.drawImage(img, f.x, f.y, f.w, f.h, dx, dy, f.w, f.h)
+    }
+
+    const tick = () => {
+      if (cancelled || total <= 1) return
+      const delay = Math.max(16, Math.round(1000 / playbackFpsRef.current))
+      playbackTimerRef.current = setTimeout(() => {
+        if (cancelled) return
+        const next = (playbackIndexRef.current + 1) % total
+        playbackIndexRef.current = next
+        setPlaybackIndex(next)
+        drawFrame(next)
+        tick()
+      }, delay)
+    }
+
+    const img = new Image()
+    img.onload = () => {
+      if (cancelled) return
+      playbackImageRef.current = img
+      drawFrame(playbackIndexRef.current)
+      tick()
+    }
+    img.src = sheetUrl
+
+    return () => {
+      cancelled = true
+      if (playbackTimerRef.current) {
+        clearTimeout(playbackTimerRef.current)
+        playbackTimerRef.current = null
+      }
+    }
+  }, [frames, playbackOpen, sheetUrl])
 
   const loadFiles = useCallback(
     async (e) => {
@@ -671,6 +772,14 @@ export default function Spritesheet() {
               className="tool-sheet-preview"
             />
             <div className="tool-btn-row tool-btn-row-stacked">
+              <button
+                type="button"
+                className="tool-btn-secondary"
+                onClick={openPlayback}
+                disabled={!frames.length}
+              >
+                试播精灵图
+              </button>
               <button type="button" className="tool-btn-download" onClick={downloadPng}>
                 下载 spritesheet.png
               </button>
@@ -681,6 +790,68 @@ export default function Spritesheet() {
           </div>
         )}
       </div>
+
+      {playbackOpen &&
+        createPortal(
+          <div
+            className="tool-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="精灵图试播"
+            onClick={closePlayback}
+          >
+            <div
+              className={`tool-modal-inner ${styles.playbackInner}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="tool-modal-close"
+                onClick={closePlayback}
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+              <canvas
+                ref={playbackCanvasRef}
+                className="tool-modal-canvas"
+                width={playbackCanvasSize.w}
+                height={playbackCanvasSize.h}
+              />
+              <div className={styles.playbackControls}>
+                <label className={styles.playbackFpsLabel} htmlFor="spritesheet-play-fps">
+                  帧率（每秒多少张）
+                </label>
+                <input
+                  id="spritesheet-play-fps"
+                  className={`tool-input ${styles.playbackFpsInput}`}
+                  type="number"
+                  min={MIN_PLAY_FPS}
+                  max={MAX_PLAY_FPS}
+                  step="1"
+                  value={playbackFpsInput}
+                  onChange={(e) => {
+                    const raw = e.target.value
+                    setPlaybackFpsInput(raw)
+                    const n = Number(raw)
+                    if (Number.isFinite(n) && n >= MIN_PLAY_FPS && n <= MAX_PLAY_FPS) {
+                      playbackFpsRef.current = Math.floor(n)
+                    }
+                  }}
+                  onBlur={() => {
+                    const fps = resolvePlaybackFps()
+                    playbackFpsRef.current = fps
+                    setPlaybackFpsInput(String(fps))
+                  }}
+                />
+                <span className={styles.playbackCounter}>
+                  {frames.length ? `${playbackIndex + 1} / ${frames.length}` : '0 / 0'}
+                </span>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </ToolPageLayout>
   )
 }
