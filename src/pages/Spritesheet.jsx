@@ -174,7 +174,7 @@ export default function Spritesheet() {
         await new Promise((r) => {
           img.onload = r
         })
-        loaded.push({ img, revoke: u, name: '' })
+        loaded.push({ img, revoke: u, name: '', selected: true })
       }
       setImages(loaded)
       setSheetVisible(false)
@@ -194,6 +194,38 @@ export default function Spritesheet() {
       return next
     })
   }, [])
+
+  const toggleImageSelected = useCallback((index) => {
+    setImages((prev) => {
+      if (!prev[index]) return prev
+      const next = [...prev]
+      next[index] = { ...next[index], selected: !next[index].selected }
+      return next
+    })
+  }, [])
+
+  const selectAllImages = useCallback(() => {
+    setImages((prev) => prev.map((p) => (p.selected ? p : { ...p, selected: true })))
+  }, [])
+
+  const clearAllImages = useCallback(() => {
+    setImages((prev) => prev.map((p) => (p.selected ? { ...p, selected: false } : p)))
+  }, [])
+
+  const deleteImage = useCallback((index) => {
+    setImages((prev) => {
+      if (!prev[index]) return prev
+      URL.revokeObjectURL(prev[index].revoke)
+      const next = [...prev]
+      next.splice(index, 1)
+      return next
+    })
+  }, [])
+
+  const selectedCount = useMemo(
+    () => images.reduce((n, p) => n + (p.selected ? 1 : 0), 0),
+    [images]
+  )
 
   const moveImage = useCallback((index, delta) => {
     setImages((prev) => {
@@ -276,9 +308,15 @@ export default function Spritesheet() {
       return
     }
 
+    const usedImages = images.filter((p) => p.selected)
+    if (!usedImages.length) {
+      showToast('请至少勾选一张图片')
+      return
+    }
+
     const colCount = Math.max(1, parseInt(String(cols), 10) || 10)
     const pad = Math.max(0, parseInt(String(padding), 10) || 0)
-    const count = images.length
+    const count = usedImages.length
     const rows = Math.ceil(count / colCount)
 
     const canvas = document.createElement('canvas')
@@ -298,7 +336,7 @@ export default function Spritesheet() {
       canvas.height = rows * h + (rows - 1) * pad
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach((entry, i) => {
+      usedImages.forEach((entry, i) => {
         const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
@@ -315,7 +353,7 @@ export default function Spritesheet() {
     } else if (layoutMode === 'natural') {
       const colWidths = new Array(colCount).fill(0)
       const rowHeights = new Array(rows).fill(0)
-      images.forEach(({ img }, i) => {
+      usedImages.forEach(({ img }, i) => {
         const col = i % colCount
         const row = Math.floor(i / colCount)
         if (img.width > colWidths[col]) colWidths[col] = img.width
@@ -337,7 +375,7 @@ export default function Spritesheet() {
       canvas.height = Math.max(1, cy)
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach((entry, i) => {
+      usedImages.forEach((entry, i) => {
         const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
@@ -355,7 +393,7 @@ export default function Spritesheet() {
       const w = Math.max(
         1,
         Math.ceil(
-          images.reduce((maxW, { img }) => {
+          usedImages.reduce((maxW, { img }) => {
             const scale = h / img.height
             return Math.max(maxW, img.width * scale)
           }, 0)
@@ -365,7 +403,7 @@ export default function Spritesheet() {
       canvas.height = rows * h + (rows - 1) * pad
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach((entry, i) => {
+      usedImages.forEach((entry, i) => {
         const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
@@ -384,7 +422,7 @@ export default function Spritesheet() {
       const h = Math.max(
         1,
         Math.ceil(
-          images.reduce((maxH, { img }) => {
+          usedImages.reduce((maxH, { img }) => {
             const scale = w / img.width
             return Math.max(maxH, img.height * scale)
           }, 0)
@@ -394,7 +432,7 @@ export default function Spritesheet() {
       canvas.height = rows * h + (rows - 1) * pad
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      images.forEach((entry, i) => {
+      usedImages.forEach((entry, i) => {
         const { img } = entry
         const col = i % colCount
         const row = Math.floor(i / colCount)
@@ -538,7 +576,28 @@ export default function Spritesheet() {
           {images.length > 0 && (
             <div className={styles.orderBlock}>
               <div className={styles.orderHint}>
-                合成顺序（影响雪碧图格子与 frame 编号）：可拖左侧手柄或上移/下移；左侧序号为可编辑序号，改为目标位置后失焦即与对调。可填写名称作为导出 JSON 中的 key，留空则用 frame-序号。
+                合成顺序（影响雪碧图格子与 frame 编号）：可拖左侧手柄或上移/下移；左侧序号为可编辑序号，改为目标位置后失焦即与对调。可填写名称作为导出 JSON 中的 key，留空则用 frame-序号。仅勾选的图片会参与合成。
+              </div>
+              <div className={styles.orderToolbar}>
+                <button
+                  type="button"
+                  className="tool-btn-secondary"
+                  onClick={selectAllImages}
+                  disabled={selectedCount === images.length}
+                >
+                  全选
+                </button>
+                <button
+                  type="button"
+                  className="tool-btn-secondary"
+                  onClick={clearAllImages}
+                  disabled={selectedCount === 0}
+                >
+                  取消全选
+                </button>
+                <span className={styles.orderCount}>
+                  已选 {selectedCount} / {images.length}
+                </span>
               </div>
               <div className={styles.orderList}>
                 {images.map((entry, index) => (
@@ -561,6 +620,13 @@ export default function Spritesheet() {
                     >
                       <span className={styles.dragGripDots} aria-hidden />
                     </button>
+                    <input
+                      type="checkbox"
+                      className={styles.orderCheckbox}
+                      checked={!!entry.selected}
+                      onChange={() => toggleImageSelected(index)}
+                      aria-label={`选择第 ${index + 1} 张`}
+                    />
                     <input
                       key={`slot-${entry.revoke}-${index}`}
                       type="number"
@@ -612,6 +678,14 @@ export default function Spritesheet() {
                         aria-label={`将第 ${index + 1} 张下移`}
                       >
                         下移
+                      </button>
+                      <button
+                        type="button"
+                        className={`tool-btn-secondary ${styles.orderBtn} ${styles.orderBtnDanger}`}
+                        onClick={() => deleteImage(index)}
+                        aria-label={`删除第 ${index + 1} 张`}
+                      >
+                        删除
                       </button>
                     </div>
                   </div>

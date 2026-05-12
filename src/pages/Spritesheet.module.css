@@ -75,12 +75,43 @@
 }
 
 .orderSlotInput {
-  width: 2.75rem;
+  width: 100px;
   min-width: 0;
-  padding: 0.2rem 0.25rem;
-  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
   text-align: center;
   flex-shrink: 0;
+}
+
+.orderToolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.orderCount {
+  font-size: 0.85rem;
+  color: var(--tool-muted, #666);
+  margin-left: auto;
+}
+
+.orderCheckbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.orderBtnDanger {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.orderBtnDanger:hover {
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .orderThumb {
