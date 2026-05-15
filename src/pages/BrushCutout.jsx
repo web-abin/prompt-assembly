@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import JSZip from 'jszip'
 import ToolPageLayout from '../components/ToolPageLayout'
 import { useToast } from '../context/ToastContext'
 import styles from './BrushCutout.module.css'
@@ -14,6 +15,8 @@ const MAX_DISPLAY_WIDTH = 900
 const MAX_DISPLAY_HEIGHT = 560
 const MASK_COLOR = 'rgba(24, 144, 255, 0.9)'
 const HISTORY_LIMIT = 30
+const MIN_REGION_AREA = 16
+const ALPHA_THRESHOLD = 8
 
 export default function BrushCutout() {
   const { showToast } = useToast()
@@ -25,18 +28,34 @@ export default function BrushCutout() {
   const imageRef = useRef(null)
   const drawStateRef = useRef({ active: false, startX: 0, startY: 0, lastX: 0, lastY: 0 })
   const historyRef = useRef([])
+  const resultsRef = useRef([])
 
   const [hasImage, setHasImage] = useState(false)
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 })
   const [tool, setTool] = useState(TOOLS.BRUSH)
   const [brushSize, setBrushSize] = useState(40)
-  const [resultUrl, setResultUrl] = useState(null)
+  const [results, setResults] = useState([])
   const [busy, setBusy] = useState(false)
 
   const getMaskCtx = useCallback(() => maskCanvasRef.current?.getContext('2d') ?? null, [])
   const getPreviewCtx = useCallback(
     () => previewCanvasRef.current?.getContext('2d') ?? null,
     [],
+  )
+
+  const revokeResults = useCallback((list) => {
+    list.forEach((r) => {
+      if (r.url) URL.revokeObjectURL(r.url)
+    })
+  }, [])
+
+  const updateResults = useCallback(
+    (newResults) => {
+      revokeResults(resultsRef.current)
+      resultsRef.current = newResults
+      setResults(newResults)
+    },
+    [revokeResults],
   )
 
   const pushHistory = useCallback(() => {
@@ -73,7 +92,7 @@ export default function BrushCutout() {
     historyRef.current = []
     clearMask()
     clearPreview()
-    setResultUrl(null)
+    updateResults([])
   }
 
   const handleUndo = () => {
@@ -103,7 +122,7 @@ export default function BrushCutout() {
         imageRef.current = img
         setDisplaySize({ w, h })
         setHasImage(true)
-        setResultUrl(null)
+        updateResults([])
         historyRef.current = []
 
         requestAnimationFrame(() => {
@@ -127,7 +146,7 @@ export default function BrushCutout() {
       }
       img.src = dataUrl
     },
-    [showToast],
+    [showToast, updateResults],
   )
 
   const handleFileChange = (e) => {
@@ -277,7 +296,7 @@ export default function BrushCutout() {
     e.currentTarget.releasePointerCapture?.(e.pointerId)
   }
 
-  const extract = useCallback(() => {
+  const extract = useCallback(async () => {
     const img = imageRef.current
     const maskCanvas = maskCanvasRef.current
     if (!img || !maskCanvas) {
@@ -285,15 +304,19 @@ export default function BrushCutout() {
       return
     }
     const maskCtx = maskCanvas.getContext('2d')
-    const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height)
-    let hasAny = false
-    for (let i = 3; i < maskData.data.length; i += 4) {
-      if (maskData.data[i] > 0) {
-        hasAny = true
-        break
-      }
-    }
-    if (!hasAny) {
+    const dispW = maskCanvas.width
+    const dispH = maskCanvas.height
+    const maskData = maskCtx.getImageData(0, 0, dispW, dispH)
+
+    const { labels, components } = findConnectedComponents(
+      maskData,
+      dispW,
+      dispH,
+      ALPHA_THRESHOLD,
+      MIN_REGION_AREA,
+    )
+
+    if (!components.length) {
       showToast('请先用画笔或形状框选区域')
       return
     }
@@ -302,43 +325,76 @@ export default function BrushCutout() {
     try {
       const naturalW = img.naturalWidth
       const naturalH = img.naturalHeight
+      const scaleX = naturalW / dispW
+      const scaleY = naturalH / dispH
 
-      const out = document.createElement('canvas')
-      out.width = naturalW
-      out.height = naturalH
-      const outCtx = out.getContext('2d')
-      outCtx.drawImage(img, 0, 0, naturalW, naturalH)
+      const regionCanvases = components.map((c) =>
+        buildRegionCanvas(img, maskData.data, labels, dispW, c, scaleX, scaleY, naturalW, naturalH),
+      )
 
-      const scaledMask = document.createElement('canvas')
-      scaledMask.width = naturalW
-      scaledMask.height = naturalH
-      const smCtx = scaledMask.getContext('2d')
-      smCtx.imageSmoothingEnabled = true
-      smCtx.drawImage(maskCanvas, 0, 0, naturalW, naturalH)
+      const blobs = await Promise.all(
+        regionCanvases.map((c) => canvasToBlob(c, 'image/png')),
+      )
 
-      outCtx.globalCompositeOperation = 'destination-in'
-      outCtx.drawImage(scaledMask, 0, 0)
-      outCtx.globalCompositeOperation = 'source-over'
-
-      const cropped = cropToContent(out)
-      setResultUrl(cropped.toDataURL('image/png'))
+      const newResults = blobs.map((blob, i) => ({
+        blob,
+        url: URL.createObjectURL(blob),
+        name: `cutout_${String(i + 1).padStart(2, '0')}.png`,
+        width: regionCanvases[i].width,
+        height: regionCanvases[i].height,
+      }))
+      updateResults(newResults)
     } catch (err) {
       console.error(err)
       showToast('提取失败')
     } finally {
       setBusy(false)
     }
-  }, [showToast])
+  }, [showToast, updateResults])
+
+  const handleDownload = useCallback(async () => {
+    if (!results.length) return
+    if (results.length === 1) {
+      const a = document.createElement('a')
+      a.href = results[0].url
+      a.download = results[0].name
+      a.click()
+      return
+    }
+    try {
+      const zip = new JSZip()
+      results.forEach((r) => zip.file(r.name, r.blob))
+      const content = await zip.generateAsync({ type: 'blob' })
+      const zipUrl = URL.createObjectURL(content)
+      const a = document.createElement('a')
+      a.href = zipUrl
+      a.download = `brush_cutouts_${Date.now()}.zip`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(zipUrl), 1000)
+    } catch (err) {
+      console.error(err)
+      showToast('打包下载失败')
+    }
+  }, [results, showToast])
 
   const cursorClass = hasImage ? styles.cursorBrush : ''
 
   useEffect(() => {
     return () => {
       historyRef.current = []
+      revokeResults(resultsRef.current)
+      resultsRef.current = []
     }
-  }, [])
+  }, [revokeResults])
 
   const isToolActive = (t) => tool === t
+  const regionCount = results.length
+  const downloadLabel =
+    regionCount === 0
+      ? '📥 下载透明 PNG'
+      : regionCount === 1
+        ? '📥 下载透明 PNG'
+        : `📦 下载 ZIP（共 ${regionCount} 张）`
 
   return (
     <ToolPageLayout title="自由框选抠图">
@@ -346,7 +402,7 @@ export default function BrushCutout() {
         <div className={styles.card}>
           <h2 className={styles.title}>✂️ 自由框选抠图</h2>
           <p className={styles.subtitle}>
-            上传图片后，使用画笔 / 矩形 / 圆形等工具圈出需要保留的区域，未涂抹部分将变成透明背景导出 PNG。
+            上传图片后，使用画笔 / 矩形 / 圆形等工具圈出需要保留的区域。每个独立的框选都会被单独导出为透明 PNG，多个区域将打包为 ZIP 下载。
           </p>
 
           <div className={styles.area}>
@@ -427,7 +483,7 @@ export default function BrushCutout() {
                 onClick={extract}
                 disabled={!hasImage || busy}
               >
-                {busy ? '处理中...' : '提取选区为透明 PNG'}
+                {busy ? '处理中...' : '提取所有选区'}
               </button>
             </div>
           </div>
@@ -454,24 +510,41 @@ export default function BrushCutout() {
 
           <div className={styles.bottomBar}>
             <div>
-              <h4 className={styles.boxTitle}>提取结果</h4>
-              <div className={styles.resultBox}>
-                {resultUrl ? (
-                  <img src={resultUrl} alt="提取结果" />
-                ) : (
-                  <span className={styles.placeholder}>等待提取...</span>
+              <div className={styles.resultHeader}>
+                <h4 className={styles.boxTitle}>提取结果</h4>
+                {regionCount > 0 && (
+                  <span className={styles.resultCount}>共 {regionCount} 个区域</span>
                 )}
               </div>
-              <a
-                className={`${styles.downloadBtn} ${!resultUrl ? styles.downloadBtnDisabled : ''}`}
-                href={resultUrl || '#'}
-                download="brush_cutout.png"
-                onClick={(e) => {
-                  if (!resultUrl) e.preventDefault()
-                }}
+              <div className={styles.resultBox}>
+                {regionCount === 0 ? (
+                  <span className={styles.placeholder}>等待提取...</span>
+                ) : (
+                  <div className={styles.resultGrid}>
+                    {results.map((r, i) => (
+                      <div className={styles.resultItem} key={r.url}>
+                        <div className={styles.resultThumb}>
+                          <img src={r.url} alt={`区域 ${i + 1}`} />
+                        </div>
+                        <div className={styles.resultMeta}>
+                          <span className={styles.resultIndex}>#{i + 1}</span>
+                          <span className={styles.resultDim}>
+                            {r.width}×{r.height}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                className={`${styles.downloadBtn} ${regionCount === 0 ? styles.downloadBtnDisabled : ''}`}
+                onClick={handleDownload}
+                disabled={regionCount === 0}
               >
-                📥 下载透明 PNG
-              </a>
+                {downloadLabel}
+              </button>
             </div>
             <div>
               <h4 className={styles.boxTitle}>使用说明</h4>
@@ -489,7 +562,7 @@ export default function BrushCutout() {
                   <strong>撤销</strong>：可回退最近一次涂抹/形状操作（最多 {HISTORY_LIMIT} 步）。
                 </div>
                 <div>
-                  <strong>提取</strong>：只保留蓝色选区下的像素，其余像素变透明并自动裁剪空白边。
+                  <strong>多区域</strong>：彼此不相连的选区会各自导出为一张紧贴边缘的透明 PNG，超过 1 张将打包为 ZIP。
                 </div>
               </div>
             </div>
@@ -500,7 +573,132 @@ export default function BrushCutout() {
   )
 }
 
-function cropToContent(canvas) {
+function findConnectedComponents(maskData, width, height, alphaThreshold, minArea) {
+  const labels = new Int32Array(width * height)
+  const data = maskData.data
+  const stack = new Int32Array(width * height)
+  const components = []
+  let nextLabel = 0
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const start = y * width + x
+      if (labels[start] !== 0) continue
+      if (data[start * 4 + 3] < alphaThreshold) continue
+
+      nextLabel++
+      let stackTop = 0
+      stack[stackTop++] = start
+      labels[start] = nextLabel
+
+      let minX = x
+      let maxX = x
+      let minY = y
+      let maxY = y
+      let count = 0
+
+      while (stackTop > 0) {
+        const idx = stack[--stackTop]
+        const cy = (idx / width) | 0
+        const cx = idx - cy * width
+        count++
+        if (cx < minX) minX = cx
+        if (cx > maxX) maxX = cx
+        if (cy < minY) minY = cy
+        if (cy > maxY) maxY = cy
+
+        for (let dy = -1; dy <= 1; dy++) {
+          const ny = cy + dy
+          if (ny < 0 || ny >= height) continue
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue
+            const nx = cx + dx
+            if (nx < 0 || nx >= width) continue
+            const nIdx = ny * width + nx
+            if (labels[nIdx] !== 0) continue
+            if (data[nIdx * 4 + 3] < alphaThreshold) continue
+            labels[nIdx] = nextLabel
+            stack[stackTop++] = nIdx
+          }
+        }
+      }
+
+      if (count >= minArea) {
+        components.push({ label: nextLabel, minX, maxX, minY, maxY, count })
+      }
+    }
+  }
+
+  // Sort by reading order (top-to-bottom, then left-to-right) for stable naming
+  components.sort((a, b) => {
+    if (a.minY !== b.minY) return a.minY - b.minY
+    return a.minX - b.minX
+  })
+
+  return { labels, components }
+}
+
+function buildRegionCanvas(
+  img,
+  maskRgba,
+  labels,
+  dispW,
+  component,
+  scaleX,
+  scaleY,
+  naturalW,
+  naturalH,
+) {
+  const { label, minX, maxX, minY, maxY } = component
+  const bboxW = maxX - minX + 1
+  const bboxH = maxY - minY + 1
+
+  // Per-component mask at display resolution, restricted to bbox
+  const compMask = new ImageData(bboxW, bboxH)
+  const cmData = compMask.data
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      if (labels[y * dispW + x] !== label) continue
+      const srcIdx = (y * dispW + x) * 4
+      const dstIdx = ((y - minY) * bboxW + (x - minX)) * 4
+      cmData[dstIdx + 3] = maskRgba[srcIdx + 3]
+    }
+  }
+  const compMaskCanvas = document.createElement('canvas')
+  compMaskCanvas.width = bboxW
+  compMaskCanvas.height = bboxH
+  compMaskCanvas.getContext('2d').putImageData(compMask, 0, 0)
+
+  // Natural-resolution bbox (with 1px buffer to swallow rounding)
+  const buffer = 1
+  const nMinX = Math.max(0, Math.floor(minX * scaleX) - buffer)
+  const nMinY = Math.max(0, Math.floor(minY * scaleY) - buffer)
+  const nMaxX = Math.min(naturalW, Math.ceil((maxX + 1) * scaleX) + buffer)
+  const nMaxY = Math.min(naturalH, Math.ceil((maxY + 1) * scaleY) + buffer)
+  const regionW = nMaxX - nMinX
+  const regionH = nMaxY - nMinY
+
+  const work = document.createElement('canvas')
+  work.width = regionW
+  work.height = regionH
+  const workCtx = work.getContext('2d')
+  workCtx.imageSmoothingEnabled = true
+  workCtx.drawImage(img, nMinX, nMinY, regionW, regionH, 0, 0, regionW, regionH)
+
+  // Where the display-space bbox lands inside the natural-space region
+  const drawX = minX * scaleX - nMinX
+  const drawY = minY * scaleY - nMinY
+  const drawW = bboxW * scaleX
+  const drawH = bboxH * scaleY
+
+  workCtx.globalCompositeOperation = 'destination-in'
+  workCtx.drawImage(compMaskCanvas, drawX, drawY, drawW, drawH)
+  workCtx.globalCompositeOperation = 'source-over'
+
+  return cropToContent(work, 0)
+}
+
+function cropToContent(canvas, padding = 0) {
   const ctx = canvas.getContext('2d')
   const { width, height } = canvas
   const data = ctx.getImageData(0, 0, width, height).data
@@ -520,6 +718,12 @@ function cropToContent(canvas) {
     }
   }
   if (maxX < 0 || maxY < 0) return canvas
+  if (padding > 0) {
+    minX = Math.max(0, minX - padding)
+    minY = Math.max(0, minY - padding)
+    maxX = Math.min(width - 1, maxX + padding)
+    maxY = Math.min(height - 1, maxY + padding)
+  }
   const w = maxX - minX + 1
   const h = maxY - minY + 1
   const out = document.createElement('canvas')
@@ -527,4 +731,17 @@ function cropToContent(canvas) {
   out.height = h
   out.getContext('2d').drawImage(canvas, minX, minY, w, h, 0, 0, w, h)
   return out
+}
+
+function canvasToBlob(canvas, type = 'image/png', quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob)
+        else reject(new Error('toBlob failed'))
+      },
+      type,
+      quality,
+    )
+  })
 }
