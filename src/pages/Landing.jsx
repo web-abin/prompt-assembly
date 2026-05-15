@@ -42,6 +42,12 @@ export default function Landing() {
       to: '/smart-cutout'
     },
     {
+      key: 'brush-cutout',
+      title: '自由框选抠图',
+      desc: '画笔 / 矩形 / 圆形手动框选区域，提取为透明 PNG',
+      to: '/brush-cutout'
+    },
+    {
       key: 'remove-background',
       title: '通用背景去除',
       desc: '按背景色抠图、边缘羽化，导出透明 PNG（Canvas 纯前端）',
