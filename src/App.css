@@ -2142,6 +2142,34 @@ html.dark .tool-panel {
   background: #000;
   border-radius: 8px;
 }
+.tool-modal-controls {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+.tool-modal-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13px;
+}
+.tool-modal-control input[type='range'] {
+  width: 180px;
+  accent-color: #3b82f6;
+}
+.tool-modal-fps-number {
+  width: 72px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.tool-modal-fps-unit {
+  opacity: 0.7;
+  font-size: 12px;
+}
 .tool-result-block {
   margin-top: 22px;
   padding-top: 18px;
