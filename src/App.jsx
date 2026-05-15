@@ -11,6 +11,7 @@ import BatchResize from './pages/BatchResize'
 import SequenceFrame from './pages/SequenceFrame'
 import Spritesheet from './pages/Spritesheet'
 import RemoveBackground from './pages/RemoveBackground'
+import BrushCutout from './pages/BrushCutout'
 import EmbeddedHtmlTool from './components/EmbeddedHtmlTool'
 import './App.css'
 
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/batch-resize" element={<BatchResize />} />
             <Route path="/remove-background" element={<RemoveBackground />} />
+            <Route path="/brush-cutout" element={<BrushCutout />} />
             <Route path="/sequence-frame" element={<SequenceFrame />} />
             <Route path="/spritesheet" element={<Spritesheet />} />
             <Route
