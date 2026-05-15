@@ -30,6 +30,12 @@ export default function Landing() {
       to: '/spritesheet'
     },
     {
+      key: 'sprite-player',
+      title: '精灵图序列帧试播',
+      desc: '上传精灵图和 JSON，按指定帧率播放序列帧动画',
+      to: '/sprite-player'
+    },
+    {
       key: 'img-to-spritesheet',
       title: '精灵图采集',
       desc: '从整张贴图智能提取与挑选元素，导出选用',
