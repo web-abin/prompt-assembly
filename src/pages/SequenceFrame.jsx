@@ -17,7 +17,7 @@ export default function SequenceFrame() {
   const [extracting, setExtracting] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [fpsInput, setFpsInput] = useState(String(DEFAULT_FPS))
-  const [extractedFps, setExtractedFps] = useState(DEFAULT_FPS)
+  const [playFpsInput, setPlayFpsInput] = useState(String(DEFAULT_FPS))
 
   const selectedFrames = useMemo(
     () => frames.filter((_, i) => selected.has(i)),
@@ -30,13 +30,21 @@ export default function SequenceFrame() {
   const videoInputRef = useRef(null)
   const demoCanvasRef = useRef(null)
   const animTimerRef = useRef(null)
+  const playFpsRef = useRef(DEFAULT_FPS)
 
-  const resolveFps = useCallback(() => {
-    const n = Number(fpsInput)
+  const clampFps = (value) => {
+    const n = Number(value)
     if (!Number.isFinite(n) || n < MIN_FPS) return MIN_FPS
     if (n > MAX_FPS) return MAX_FPS
     return Math.floor(n)
-  }, [fpsInput])
+  }
+
+  const resolveFps = useCallback(() => clampFps(fpsInput), [fpsInput])
+  const resolvePlayFps = useCallback(() => clampFps(playFpsInput), [playFpsInput])
+
+  useEffect(() => {
+    playFpsRef.current = clampFps(playFpsInput)
+  }, [playFpsInput])
 
   useEffect(() => {
     return () => {
@@ -53,7 +61,7 @@ export default function SequenceFrame() {
 
     const fps = resolveFps()
     setFpsInput(String(fps))
-    setExtractedFps(fps)
+    setPlayFpsInput(String(fps))
 
     setExtracting(true)
     setStatus('加载视频中…')
@@ -101,27 +109,24 @@ export default function SequenceFrame() {
     }
   }, [showToast, resolveFps])
 
-  const startAnimation = useCallback(
-    (sources) => {
-      const canvas = demoCanvasRef.current
-      if (!canvas || sources.length === 0) return
-      const ctx = canvas.getContext('2d')
-      let index = 0
+  const startAnimation = useCallback((sources) => {
+    const canvas = demoCanvasRef.current
+    if (!canvas || sources.length === 0) return
+    const ctx = canvas.getContext('2d')
+    let index = 0
 
-      const loop = () => {
-        const img = new Image()
-        img.src = sources[index]
-        img.onload = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-          ctx.drawImage(img, 0, 0)
-        }
-        index = (index + 1) % sources.length
-        animTimerRef.current = setTimeout(loop, 1000 / extractedFps)
+    const loop = () => {
+      const img = new Image()
+      img.src = sources[index]
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0)
       }
-      loop()
-    },
-    [extractedFps],
-  )
+      index = (index + 1) % sources.length
+      animTimerRef.current = setTimeout(loop, 1000 / playFpsRef.current)
+    }
+    loop()
+  }, [])
 
   const openModal = useCallback(() => {
     if (selectedFrames.length === 0) {
@@ -325,6 +330,31 @@ export default function SequenceFrame() {
                 ✕
               </button>
               <canvas ref={demoCanvasRef} className="tool-modal-canvas" />
+              <div className="tool-modal-controls">
+                <label className="tool-modal-control" htmlFor="sequence-play-fps">
+                  <span>播放帧率</span>
+                  <input
+                    id="sequence-play-fps"
+                    type="range"
+                    min={MIN_FPS}
+                    max={MAX_FPS}
+                    step="1"
+                    value={resolvePlayFps()}
+                    onChange={(e) => setPlayFpsInput(e.target.value)}
+                  />
+                  <input
+                    className="tool-input tool-modal-fps-number"
+                    type="number"
+                    min={MIN_FPS}
+                    max={MAX_FPS}
+                    step="1"
+                    value={playFpsInput}
+                    onChange={(e) => setPlayFpsInput(e.target.value)}
+                    onBlur={() => setPlayFpsInput(String(resolvePlayFps()))}
+                  />
+                  <span className="tool-modal-fps-unit">FPS</span>
+                </label>
+              </div>
             </div>
           </div>,
           document.body,
