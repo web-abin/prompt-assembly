@@ -13,6 +13,7 @@ import Spritesheet from './pages/Spritesheet'
 import SpritePlayer from './pages/SpritePlayer'
 import RemoveBackground from './pages/RemoveBackground'
 import BrushCutout from './pages/BrushCutout'
+import ImageRegionInfo from './pages/ImageRegionInfo'
 import EmbeddedHtmlTool from './components/EmbeddedHtmlTool'
 import './App.css'
 
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/batch-resize" element={<BatchResize />} />
             <Route path="/remove-background" element={<RemoveBackground />} />
             <Route path="/brush-cutout" element={<BrushCutout />} />
+            <Route path="/image-region-info" element={<ImageRegionInfo />} />
             <Route path="/sequence-frame" element={<SequenceFrame />} />
             <Route path="/spritesheet" element={<Spritesheet />} />
             <Route path="/sprite-player" element={<SpritePlayer />} />

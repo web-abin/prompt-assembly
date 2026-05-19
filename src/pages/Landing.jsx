@@ -54,6 +54,12 @@ export default function Landing() {
       to: '/brush-cutout'
     },
     {
+      key: 'image-region-info',
+      title: '图片选区信息',
+      desc: '在图上框选区域，输出 x/y/w/h 像素值与基于图片宽/高的百分比',
+      to: '/image-region-info'
+    },
+    {
       key: 'remove-background',
       title: '通用背景去除',
       desc: '按背景色抠图、边缘羽化，导出透明 PNG（Canvas 纯前端）',
