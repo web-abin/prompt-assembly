@@ -173,14 +173,18 @@ export default function Detail() {
   const { id } = useParams()
   const { showToast } = useToast()
   const tpl = useMemo(() => getTemplate(id), [id])
+  const hasZh = !!(tpl?.body && tpl.body.trim())
+  const hasEn = !!(tpl?.bodyEn && tpl.bodyEn.trim())
+  const [language, setLanguage] = useState(hasZh ? 'zh' : (hasEn ? 'en' : 'zh'))
   const [values, setValues] = useState({})
   const [quickPickerKey, setQuickPickerKey] = useState(null)
   const [styleRefOpen, setStyleRefOpen] = useState(false)
   const [editedBody, setEditedBody] = useState(null)
   const outputRef = useRef(null)
 
-  const activeBody = editedBody !== null ? editedBody : tpl?.body ?? ''
-  const isBodyModified = editedBody !== null && editedBody !== tpl?.body
+  const originalBody = language === 'en' ? (tpl?.bodyEn ?? '') : (tpl?.body ?? '')
+  const activeBody = editedBody !== null ? editedBody : originalBody
+  const isBodyModified = editedBody !== null && editedBody !== originalBody
 
   const keys = useMemo(() => extractPlaceholders(activeBody), [activeBody])
 
@@ -188,6 +192,18 @@ export default function Detail() {
     if (!tpl) return ''
     return assemblePrompt(activeBody, values)
   }, [activeBody, tpl, values])
+
+  function handleLanguageToggle() {
+    const next = language === 'zh' ? 'en' : 'zh'
+    const targetHas = next === 'zh' ? hasZh : hasEn
+    if (!targetHas) {
+      showToast(`暂无${next === 'zh' ? '中文' : '英文'}版本`)
+      return
+    }
+    setLanguage(next)
+    setEditedBody(null)
+    setValues({})
+  }
 
   function setField(key, v) {
     setValues((prev) => ({ ...prev, [key]: v }))
@@ -232,6 +248,14 @@ export default function Detail() {
               >
               <img src={iconGame} alt="" />
               游戏风格
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleLanguageToggle}
+                title={language === 'zh' ? '切换到英文版本' : '切换到中文版本'}
+              >
+                {language === 'zh' ? '中文' : 'EN'}
               </button>
               <ThemeToggle />
             </div>

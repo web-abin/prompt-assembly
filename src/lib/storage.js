@@ -27,13 +27,14 @@ export function getTemplate(id) {
   return loadRaw().find((t) => t.id === id) ?? null
 }
 
-/** @param {{ title: string, body: string }} data */
+/** @param {{ title: string, body: string, bodyEn?: string }} data */
 export function addTemplate(data) {
   const list = loadRaw()
   const item = {
     id: uid(),
     title: data.title?.trim() || '未命名模版',
     body: data.body ?? '',
+    bodyEn: data.bodyEn ?? '',
     createdAt: Date.now(),
   }
   list.unshift(item)

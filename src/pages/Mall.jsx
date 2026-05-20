@@ -51,7 +51,11 @@ export default function Mall() {
   }, [q])
 
   function handleAddToMy(t) {
-    addTemplate({ title: t.title ?? '未命名模版', body: t.content ?? '' })
+    addTemplate({
+      title: t.title ?? '未命名模版',
+      body: t.content ?? '',
+      bodyEn: t.contentEn ?? ''
+    })
     showToast('已添加到我的模版')
   }
 
@@ -110,7 +114,8 @@ export default function Mall() {
           <ul className="template-list mall-list">
             {templates.map((t, i) => {
               const locked = !t.free && !hasRedeemed()
-              const previewText = locked ? randNoise(t.title || '', 120) : (t.content || '（空模版）')
+              const displayContent = (t.content && t.content.trim()) || t.contentEn || '（空模版）'
+              const previewText = locked ? randNoise(t.title || '', 120) : displayContent
               return (
               <li key={`${t.title}-${i}`} className="template-item">
                 <div className="template-card-wrap mall-card-wrap">

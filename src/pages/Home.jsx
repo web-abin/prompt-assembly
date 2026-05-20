@@ -131,7 +131,8 @@ export default function Home() {
   }
 
   async function handleCopyBody(t) {
-    await copyTextToClipboard(t.body ?? '')
+    const text = t.body && t.body.trim() ? t.body : (t.bodyEn ?? '')
+    await copyTextToClipboard(text)
     showToast('已复制模版内容')
   }
 
@@ -249,7 +250,7 @@ export default function Home() {
                     className="template-card-preview"
                     style={{ WebkitLineClamp: PREVIEW_LINES }}
                   >
-                    {t.body || '（空模版）'}
+                    {(t.body && t.body.trim()) || t.bodyEn || '（空模版）'}
                   </p>
                 </Link>
                 <div className="template-card-actions">

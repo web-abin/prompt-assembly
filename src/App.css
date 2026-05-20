@@ -884,7 +884,17 @@ html[data-theme='dark'] .icon-btn.icon-btn-danger:hover {
 
 .modal-body-input {
   min-height: 160px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-field + .modal-field {
+  margin-top: 16px;
 }
 
 .modal-actions {
