@@ -79,21 +79,31 @@
             background: #f5f5f5;
             border: 1px solid #eee;
         }
+        .file-info {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+        .file-info ul {
+            margin: 4px 0 0;
+            padding-left: 20px;
+        }
     </style>
 </head>
 <body>
 
 <div class="box">
     <h3>🎯 透明背景元素抠图 · 智能相似度去重</h3>
-    <input type="file" id="file" accept="image/png" />
-    
+    <input type="file" id="file" accept="image/png" multiple />
+    <div id="fileInfo" class="file-info"></div>
+
     <div class="btn-group">
         <button id="start">开始抠图</button>
         <button id="selectAll">全选</button>
         <button id="unselectAll">全不选</button>
         <button id="downloadSel">下载选中(ZIP)</button>
         <button type="button" id="goSpritesheet">去合成精灵图</button>
-        
+
         <div class="threshold">
             <label>去重相似度：</label>
             <input type="range" id="similar" min="80" max="100" value="95">
@@ -115,6 +125,7 @@
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script>
 const fileInput = document.getElementById('file');
+const fileInfo = document.getElementById('fileInfo');
 const startBtn = document.getElementById('start');
 const selectAllBtn = document.getElementById('selectAll');
 const unselectAllBtn = document.getElementById('unselectAll');
@@ -127,9 +138,7 @@ const result = document.getElementById('result');
 const selectedCount = document.getElementById('selectedCount');
 const selectedList = document.getElementById('selectedList');
 
-let mainCanvas = document.createElement('canvas');
-let mainCtx = mainCanvas.getContext('2d');
-let img = null;
+let sources = []; // [{ name, img }]
 let elements = [];
 let hashes = [];
 
@@ -138,21 +147,36 @@ similarSlider.oninput = () => {
   simText.textContent = similarSlider.value + '%';
 };
 
-// 上传图片
-fileInput.onchange = (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    img = new Image();
-    img.onload = () => {
-      mainCanvas.width = img.width;
-      mainCanvas.height = img.height;
-      mainCtx.drawImage(img, 0, 0);
+function loadFileAsImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const image = new Image();
+      image.onload = () => resolve({ name: file.name, img: image });
+      image.onerror = reject;
+      image.src = ev.target.result;
     };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// 上传图片（多文件）
+fileInput.onchange = async (e) => {
+  const files = Array.from(e.target.files || []);
+  sources = [];
+  fileInfo.innerHTML = '';
+  if (!files.length) return;
+
+  try {
+    sources = await Promise.all(files.map(loadFileAsImage));
+  } catch (err) {
+    fileInfo.textContent = '部分图片加载失败：' + (err?.message || err);
+    return;
+  }
+
+  const list = sources.map(s => `<li>${s.name}（${s.img.width}×${s.img.height}）</li>`).join('');
+  fileInfo.innerHTML = `已加载 <b>${sources.length}</b> 个文件：<ul>${list}</ul>`;
 };
 
 // 生成感知哈希
@@ -195,79 +219,93 @@ function updateSelectedPreview() {
   });
 }
 
-// 开始抠图
-startBtn.onclick = () => {
-  if (!img) return;
-  elements = [];
-  hashes = [];
-  result.innerHTML = '';
+// 在单张大图上跑连通域抠图，命中的元素 push 到 elements
+function extractFromImage(source) {
+  const { name, img } = source;
+  const w = img.width;
+  const h = img.height;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0);
 
-  const w = mainCanvas.width;
-  const h = mainCanvas.height;
-  const data = mainCtx.getImageData(0, 0, w, h).data;
+  const data = ctx.getImageData(0, 0, w, h).data;
   const visited = new Uint8Array(w * h);
   const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
   const threshold = parseInt(similarSlider.value);
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const idx = (y * w + x) * 4;
-      const alpha = data[idx + 3];
-      if (alpha > 10 && !visited[y * w + x]) {
-        const queue = [[x, y]];
-        visited[y * w + x] = 1;
-        let minX = x, maxX = x, minY = y, maxY = y;
+      const baseIdx = (y * w + x) * 4;
+      const alpha = data[baseIdx + 3];
+      if (alpha <= 10 || visited[y * w + x]) continue;
 
-        while (queue.length) {
-          const [cx, cy] = queue.shift();
-          minX = Math.min(minX, cx);
-          maxX = Math.max(maxX, cx);
-          minY = Math.min(minY, cy);
-          maxY = Math.max(maxY, cy);
+      const queue = [[x, y]];
+      visited[y * w + x] = 1;
+      let minX = x, maxX = x, minY = y, maxY = y;
 
-          for (const [dx, dy] of dirs) {
-            const nx = cx + dx, ny = cy + dy;
-            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-            if (visited[ny * w + nx]) continue;
-            const i = (ny * w + nx) * 4;
-            if (data[i + 3] > 10) {
-              visited[ny * w + nx] = 1;
-              queue.push([nx, ny]);
-            }
+      while (queue.length) {
+        const [cx, cy] = queue.shift();
+        minX = Math.min(minX, cx);
+        maxX = Math.max(maxX, cx);
+        minY = Math.min(minY, cy);
+        maxY = Math.max(maxY, cy);
+
+        for (const [dx, dy] of dirs) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          if (visited[ny * w + nx]) continue;
+          const i = (ny * w + nx) * 4;
+          if (data[i + 3] > 10) {
+            visited[ny * w + nx] = 1;
+            queue.push([nx, ny]);
           }
         }
-
-        // 抠图
-        const c = document.createElement('canvas');
-        c.width = maxX - minX + 1;
-        c.height = maxY - minY + 1;
-        c.getContext('2d').drawImage(mainCanvas, minX, minY, c.width, c.height, 0, 0, c.width, c.height);
-        
-        // 去重判断
-        const hash = getHash(c);
-        let duplicate = false;
-        for (const h of hashes) {
-          if (getSimilarity(hash, h) >= threshold) {
-            duplicate = true;
-            break;
-          }
-        }
-        if (duplicate) continue;
-
-        hashes.push(hash);
-        const url = c.toDataURL('image/png');
-        const idx = elements.length;
-        elements.push({ url, checked: true });
-
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-          <img src="${url}">
-          <label><input type="checkbox" class="c" data-i="${idx}" checked> 第${idx+1}个</label>
-        `;
-        result.appendChild(div);
       }
+
+      // 抠图
+      const c = document.createElement('canvas');
+      c.width = maxX - minX + 1;
+      c.height = maxY - minY + 1;
+      c.getContext('2d').drawImage(canvas, minX, minY, c.width, c.height, 0, 0, c.width, c.height);
+
+      // 去重判断（跨所有源文件共享 hashes）
+      const hash = getHash(c);
+      let duplicate = false;
+      for (const ph of hashes) {
+        if (getSimilarity(hash, ph) >= threshold) {
+          duplicate = true;
+          break;
+        }
+      }
+      if (duplicate) continue;
+
+      hashes.push(hash);
+      const url = c.toDataURL('image/png');
+      const idx = elements.length;
+      elements.push({ url, checked: true, source: name });
+
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <img src="${url}">
+        <label><input type="checkbox" class="c" data-i="${idx}" checked> 第${idx+1}个</label>
+      `;
+      result.appendChild(div);
     }
+  }
+}
+
+// 开始抠图（遍历所有上传文件）
+startBtn.onclick = () => {
+  if (!sources.length) return;
+  elements = [];
+  hashes = [];
+  result.innerHTML = '';
+
+  for (const source of sources) {
+    extractFromImage(source);
   }
 
   updateSelectedPreview();
