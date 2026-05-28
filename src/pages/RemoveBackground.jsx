@@ -27,6 +27,11 @@ export default function RemoveBackground() {
       name: 'remove.bg',
       desc: '专业背景移除工具，适合一键生成透明背景 PNG',
       url: 'https://www.remove.bg/'
+    },
+    {
+      name: '蔻蔻图',
+      desc: '中文 AI 抠图站点，支持人物、商品、Logo 等多场景',
+      url: 'https://www.koukoutu.com/removebgtool/all'
     }
   ]
 
