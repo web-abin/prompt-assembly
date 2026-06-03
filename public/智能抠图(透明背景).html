@@ -43,6 +43,27 @@
             border: 1px solid #eee;
             padding: 8px;
             border-radius: 6px;
+            position: relative;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+        }
+        .delete-btn:hover {
+            opacity: 1;
         }
         .item img {
             width: 80px;
@@ -78,6 +99,10 @@
             object-fit: contain;
             background: #f5f5f5;
             border: 1px solid #eee;
+            cursor: pointer;
+        }
+        .selected-item:hover {
+            border-color: #4a90d9;
         }
         .file-info {
             margin-top: 8px;
@@ -117,7 +142,14 @@
 
 <!-- 已选列表 -->
 <div class="selected-bar">
-    <div class="selected-info">已选择：<span id="selectedCount">0</span> 张</div>
+    <div class="selected-info">
+        已选择：<span id="selectedCount">0</span> 张
+        <span style="margin-left: 15px; font-size: 12px;">
+            预览大小：
+            <input type="range" id="previewSize" min="20" max="100" value="20">
+            <span id="previewSizeText">20px</span>
+        </span>
+    </div>
     <div id="selectedList" class="selected-list"></div>
 </div>
 
@@ -137,14 +169,27 @@ const result = document.getElementById('result');
 
 const selectedCount = document.getElementById('selectedCount');
 const selectedList = document.getElementById('selectedList');
+const previewSizeSlider = document.getElementById('previewSize');
+const previewSizeText = document.getElementById('previewSizeText');
 
 let sources = []; // [{ name, img }]
+let previewSize = 20;
 let elements = [];
 let hashes = [];
 
 // 更新相似度显示
 similarSlider.oninput = () => {
   simText.textContent = similarSlider.value + '%';
+};
+
+// 更新预览大小
+previewSizeSlider.oninput = () => {
+  previewSize = parseInt(previewSizeSlider.value);
+  previewSizeText.textContent = previewSize + 'px';
+  document.querySelectorAll('.selected-item').forEach(img => {
+    img.style.width = previewSize + 'px';
+    img.style.height = previewSize + 'px';
+  });
 };
 
 function loadFileAsImage(file) {
@@ -211,12 +256,53 @@ function updateSelectedPreview() {
   selectedCount.textContent = list.length;
   selectedList.innerHTML = '';
 
-  list.forEach(e => {
+  list.forEach((e, index) => {
     const img = document.createElement('img');
     img.className = 'selected-item';
     img.src = e.url;
+    img.style.width = previewSize + 'px';
+    img.style.height = previewSize + 'px';
+    img.title = `元素 ${index + 1}`;
     selectedList.appendChild(img);
   });
+}
+
+// 删除元素
+function deleteElement(index) {
+  // 从数组中删除
+  elements.splice(index, 1);
+  
+  // 重新生成哈希
+  hashes = [];
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d');
+  elements.forEach(e => {
+    const img = new Image();
+    img.src = e.url;
+    tempCanvas.width = img.width;
+    tempCanvas.height = img.height;
+    tempCtx.drawImage(img, 0, 0);
+    hashes.push(getHash(tempCanvas));
+  });
+  
+  // 重新渲染结果区域
+  renderResult();
+}
+
+// 重新渲染结果区域
+function renderResult() {
+  result.innerHTML = '';
+  elements.forEach((e, idx) => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <button class="delete-btn" data-i="${idx}" title="删除">×</button>
+      <img src="${e.url}">
+      <label><input type="checkbox" class="c" data-i="${idx}" ${e.checked ? 'checked' : ''}> 第${idx+1}个</label>
+    `;
+    result.appendChild(div);
+  });
+  updateSelectedPreview();
 }
 
 // 在单张大图上跑连通域抠图，命中的元素 push 到 elements
@@ -289,6 +375,7 @@ function extractFromImage(source) {
       const div = document.createElement('div');
       div.className = 'item';
       div.innerHTML = `
+        <button class="delete-btn" data-i="${idx}" title="删除">×</button>
         <img src="${url}">
         <label><input type="checkbox" class="c" data-i="${idx}" checked> 第${idx+1}个</label>
       `;
@@ -335,6 +422,16 @@ document.addEventListener('change', e => {
     const i = e.target.dataset.i;
     elements[i].checked = e.target.checked;
     updateSelectedPreview();
+  }
+});
+
+// 删除按钮事件
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('delete-btn')) {
+    const i = parseInt(e.target.dataset.i);
+    if (confirm('确定要删除这个元素吗？')) {
+      deleteElement(i);
+    }
   }
 });
 
