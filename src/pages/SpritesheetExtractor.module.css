@@ -1,0 +1,268 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #4c1d95 50%, #1a1a2e 100%);
+  padding: 2rem;
+}
+
+.container {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.header h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.75rem;
+}
+
+.header p {
+  color: #9ca3af;
+  margin: 0;
+}
+
+.uploadGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .uploadGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.uploadCard {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.uploadLabel {
+  display: block;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.uploadZone {
+  border: 2px dashed #475569;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.uploadZone:hover {
+  border-color: #a855f7;
+}
+
+.uploadIcon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 0.75rem;
+  color: #9ca3af;
+}
+
+.uploadHint {
+  color: #9ca3af;
+  margin: 0;
+}
+
+.previewImage {
+  max-height: 10rem;
+  margin: 0 auto;
+  display: block;
+  border-radius: 0.5rem;
+}
+
+.successIcon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 0.75rem;
+  color: #4ade80;
+}
+
+.successText {
+  color: #4ade80;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnExtract {
+  background: #9333ea;
+}
+
+.btnExtract:hover:not(:disabled) {
+  background: #7c3aed;
+}
+
+.btnDownload {
+  background: #16a34a;
+}
+
+.btnDownload:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.iconSpin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.resultSection {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.resultSection h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 1rem;
+}
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .resultGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .resultGrid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+.resultItem {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.resultItem img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.resultItemName {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.instructions {
+  margin-top: 2rem;
+  background: rgba(30, 41, 59, 0.3);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.instructions h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.75rem;
+}
+
+.instructions ul {
+  color: #9ca3af;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.instructions li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.instructions li:last-child {
+  margin-bottom: 0;
+}
+
+.stepNum {
+  color: #a855f7;
+  flex-shrink: 0;
+}
+
+.tipBox {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(51, 65, 85, 0.5);
+  border-radius: 0.5rem;
+}
+
+.tipBox p {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.tipHighlight {
+  color: #a855f7;
+  font-weight: 500;
+}
