@@ -30,6 +30,12 @@ export default function Landing() {
       to: '/spritesheet'
     },
     {
+      key: 'spritesheet-extractor',
+      title: '精灵图分解',
+      desc: '上传精灵图和JSON，拆解出单独图片',
+      to: '/spritesheet-extractor'
+    },
+    {
       key: 'sprite-player',
       title: '精灵图序列帧试播',
       desc: '上传精灵图和 JSON，按指定帧率播放序列帧动画',

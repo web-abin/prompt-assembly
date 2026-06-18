@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 漫剧全流程极速画布 | 终极整合增补版</title>
+    <style>
+        /* --- 极简极客风 IDE 核心样式定义 --- */
+        :root {
+            --bg-main: #0d1117;
+            --bg-card: #161b22;
+            --bg-code: #090d10;
+            --border-color: #21262d;
+            --color-text-main: #c9d1d9;
+            --color-text-muted: #8b949e;
+            --color-primary: #3D9B6E; /* 专属森林绿 */
+            --color-primary-hover: #4ebd85;
+            --font-geek: 'Fira Code', 'SFMono-Regular', Consolas, Monaco, "Liberation Mono", "Andale Mono", "Microsoft YaHei", monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--color-text-main);
+            font-family: var(--font-geek);
+            padding: 40px 20px;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- 顶部 Header 区域 --- */
+        header {
+            width: 100%;
+            max-width: 1240px;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 24px;
+        }
+
+        .header-title-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        header h1::before {
+            content: "•";
+            color: var(--color-primary);
+            font-size: 32px;
+            line-height: 0;
+        }
+
+        header p {
+            color: var(--color-text-muted);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .brand-tag {
+            font-size: 12px;
+            background: rgba(61, 155, 110, 0.1);
+            border: 1px solid var(--color-primary);
+            color: var(--color-primary);
+            padding: 4px 12px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- 主体双栏布局 --- */
+        .container {
+            width: 100%;
+            max-width: 1240px;
+            display: flex;
+            gap: 32px;
+            align-items: flex-start;
+        }
+
+        /* 左侧步骤导航栏 */
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 40px;
+        }
+
+        .step-list {
+            list-style: none;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            margin-bottom: 6px;
+            border-left: 3px solid transparent;
+        }
+
+        .step-item:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+            color: #ffffff;
+        }
+
+        .step-item.active {
+            background-color: rgba(61, 155, 110, 0.08);
+            border-left-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .step-item.active .step-title {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .step-number {
+            background-color: var(--bg-code);
+            color: var(--color-primary);
+            border: 1px solid var(--border-color);
+            font-size: 11px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-title {
+            font-size: 14px;
+            color: var(--color-text-main);
+            transition: color 0.2s;
+        }
+
+        .step-desc {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+
+        /* 右侧内容画布 */
+        .content-area {
+            flex-grow: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .workflow-section {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            scroll-margin-top: 40px;
+            transition: border-color 0.3s ease;
+        }
+
+        .workflow-section:hover {
+            border-color: var(--color-primary);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 14px;
+        }
+
+        .section-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .badge {
+            font-size: 11px;
+            background-color: rgba(61, 155, 110, 0.15);
+            color: var(--color-primary);
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(61, 155, 110, 0.3);
+            text-transform: uppercase;
+        }
+
+        /* 核心逻辑与避坑指南卡片 */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .meta-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 18px;
+        }
+
+        .meta-card.logic-box {
+            border-left: 3px solid var(--color-primary);
+        }
+
+        .meta-card.warning-box {
+            border-left: 3px solid #d94141;
+        }
+
+        .meta-card h4 {
+            font-size: 13px;
+            color: #ffffff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-card.logic-box h4::before { content: "⚙️"; }
+        .meta-card.warning-box h4::before { content: "⚠️"; }
+
+        .meta-card ul {
+            list-style: none;
+            font-size: 13px;
+            color: var(--color-text-muted);
+            line-height: 1.8;
+        }
+
+        .meta-card ul li {
+            position: relative;
+            padding-left: 16px;
+            margin-bottom: 6px;
+        }
+
+        .meta-card ul li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: var(--color-primary);
+        }
+
+        .meta-card.warning-box ul li::before {
+            color: #d94141;
+        }
+
+        /* --- 提示词代码块规范 --- */
+        .prompt-container {
+            margin-top: 16px;
+        }
+
+        .prompt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1f242c;
+            padding: 10px 16px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+        }
+
+        .prompt-label {
+            font-size: 12px;
+            color: var(--color-text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-geek);
+        }
+
+        .prompt-label::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: #ff5f56;
+            border-radius: 50%;
+            box-shadow: 14px 0 0 #ffbd2e, 28px 0 0 #27c93f;
+            margin-right: 24px;
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--color-text-muted);
+            padding: 4px 14px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-geek);
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+            background: rgba(61, 155, 110, 0.05);
+        }
+
+        pre {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            padding: 18px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+
+        code {
+            color: #e5c07b;
+            font-size: 13px;
+            font-family: var(--font-geek);
+            line-height: 1.6;
+        }
+
+        /* --- 全局轻量通知提示 (Toast) --- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--color-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            color: #ffffff;
+            padding: 12px 24px;
+            font-size: 13px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            color: var(--color-primary);
+            font-weight: bold;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 1000px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; position: relative; top: 0; }
+            .step-list { display: flex; flex-wrap: wrap; gap: 8px; }
+            .sidebar-title { width: 100%; margin-bottom: 4px; }
+            .step-item { border-left: none; border-bottom: 3px solid transparent; margin-bottom: 0; flex: 1 1 calc(50% - 8px); }
+            .step-item.active { border-bottom-color: var(--color-primary); border-left-color: transparent; }
+            .meta-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .step-item { flex: 1 1 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title-wrapper">
+            <div>
+                <h1>AI 漫剧全流程极速画布</h1>
+                <p>一站式工业级 AI 短剧/漫剧全周期工程生产画布 • 汇聚剧本大纲、多主体控图、分镜环境与视听动态控制流</p>
+            </div>
+            <div class="brand-tag">INTEGRATED PRO MATRIX V3.0</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <ul class="step-list">
+                <div class="sidebar-title">WORKFLOW PIPELINE</div>
+                <li class="step-item active" onclick="scrollToSection('step1', this)">
+                    <div class="step-number">01</div>
+                    <div class="step-info">
+                        <div class="step-title">设定 AI 创作身份</div>
+                        <div class="step-desc">System Alignment 基础认知</div>
+                    </div>
+                </li>
+                <li class="step-item" onclick="scrollToSection('step2', this)">
+                    <div class="step-number">02</div>
+                    <div class="step-info">
+                        <div class="step-title">提取剧本情节梗概</div>
+                        <div class="step-desc">50集大纲与结构框架构建</div>
+                    </div>
+                </li>
+                <li class="step-item" onclick="scrollToSection('step3', this)">
+                    <div class="step-number">03</div>
+                    <div class="step-info">
+                        <div class="step-title">扩写标准剧本台词</div>
+                        <div class="step-desc">出场人物档案与标志外貌</div>
+                    </div>
+                </li>
+                <li class="step-item" onclick="scrollToSection('step4', this)">
+                    <div class="step-number">04</div>
+                    <div class="step-info">
+                        <div class="step-title">角色炼制与多主体控图</div>
+                        <div class="step-desc">纯白底无动作高纯度角色资产图</div>
+                    </div>
+                </li>
+                <li class="step-item" onclick="scrollToSection('step5', this)">
+                    <div class="step-number">05</div>
+                    <div class="step-info">
+                        <div class="step-title">规范精细化镜头描述</div>
+                        <div class="step-desc">构建分镜脚本与语言体系</div>
+                    </div>
+                </li>
+                <li class="step-item" onclick="scrollToSection('step6', this)">
+                    <div class="step-number">06</div>
+                    <div class="step-info">
+                        <div class="step-title">电影级分镜环境绘制</div>
+                        <div class="step-desc">主场景锚定与电影级光影</div>
+                    </div>
+                </li>
+                <li class="step-item" onclick="scrollToSection('step7', this)">
+                    <div class="step-number">07</div>
+                    <div class="step-info">
+                        <div class="step-title">维持上下文关联能力</div>
+                        <div class="step-desc">避免长文本幻觉强效约束</div>
+                    </div>
+                </li>
+                <li class="step-item" onclick="scrollToSection('step8', this)">
+                    <div class="step-number">08</div>
+                    <div class="step-info">
+                        <div class="step-title">视听动态与微控剪辑</div>
+                        <div class="step-desc">图生视频微控轨迹调控</div>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="content-area">
+            
+            <section id="step1" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">01</span>
+                        <h3 class="section-title">设定 AI 创作身份</h3>
+                    </div>
+                    <span class="badge">结构化对齐</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑</h4>
+                        <ul>
+                            <li><strong>专业人设赋予</strong>：向 AI 提问或开展创作前，必须定义清晰的专业背景，防止泛泛生成。</li>
+                            <li><strong>明确宣发定位</strong>：指出渠道（如抖音、快手等短视频平台）特征、目标受众群体及明确的剧本题材。</li>
+                            <li><strong>注入爆款要素</strong>：强调网络爆款短剧所需要的快节奏、强冲突及吸睛套路。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>切忌不加约束直接命令 AI 开始撰写正文，无身份绑定的脚本极易陷入平铺直叙、风格平淡的死胡同。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">SYSTEM_ALIGNMENT_PROMPT_1</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>你是一名拥有10年网络小说和爆款短剧编剧经验的创作者。熟悉抖音、快手等短视频平台爆款短剧的节奏、爽点 and 吸睛套路。现在我需要你为我写一部爆款AI网文改短剧剧本，要求冲突强烈、节奏极快、反转不断。题材为古代玄幻流，要求核心设定新颖。</code></pre>
+                </div>
+                <div class="prompt-container" style="margin-top: 12px;">
+                    <div class="prompt-header">
+                        <span class="prompt-label">SYSTEM_ALIGNMENT_PROMPT_2 (结构规范版)</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>你是一名资深的 AI 真人短剧编剧，现在我要你结合我给你的一个案例、一个想法，或者一部分的要求，帮我生成一个2分钟的 AI 真人短剧的剧本。
+
+短剧主打什么？南华爽剧题材、或者是爽文。
+爽文的核心是什么？
+就是具体的剧本爽点突出、节奏极快。
+
+结构规范：
+1. 必须是一个句子的钩子开头，让别人一眼就能看得下来。如果说你一个剧情非常平淡，那没有人会看。
+2. 钩子开头之后，紧接着故事进行升级，是不是冲突开始升级。
+3. 升级之后是不是有一个反转，最后结尾的时候，是不是要为下一集做铺垫留钩子。
+
+这就是一个完整的结构。台词白话、有张力，情绪饱满。
+
+明白请回复：明白，请提供你的具体要求或案例。</code></pre>
+                </div>
+            </section>
+
+            <section id="step2" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">02</span>
+                        <h3 class="section-title">提取剧本情节梗概</h3>
+                    </div>
+                    <span class="badge">大纲框架</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑</h4>
+                        <ul>
+                            <li><strong>宏观脉络切入</strong>：基于既定身份，要求 AI 首先交出宏观的全局走向。</li>
+                            <li><strong>规格参数限制</strong>：在提示词中强行规定长短，如总集数（50集）、单集时长（1分钟左右）等硬性维度。</li>
+                            <li><strong>提炼冲突主线</strong>：大纲内需明确提炼出核心冲突点与主角的终极目标。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>切勿跳过项目整体框架而直接开始撰写前几集。必须先确定好1-50集大致走向，提前规避中后期剧情逻辑崩坏与致命Bug。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">STORY_OUTLINE_PROMPT_1</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>请基于上述身份，为我规划一部50集、每集1分钟左右的古代玄幻爆款短剧。首先请帮我生成一个总的情节梗概，包含核心冲突、主角目标，并给出一个1-50集的大致剧情走向。</code></pre>
+                </div>
+                <div class="prompt-container" style="margin-top: 12px;">
+                    <div class="prompt-header">
+                        <span class="prompt-label">STORY_OUTLINE_PROMPT_2 (工业拆解版)</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>我需要你帮我制作一部50集的AI真人短剧剧本，单集时长1分钟。
+
+在开始撰写剧本之前，请先帮我规划并输出一份完整的【项目框架】，必须包含以下部分：
+1. 剧本概况（核心受众、核心爽点、核心冲突）
+2. 50集的剧情大纲梗概（分五个阶段，每阶段10集，要求节奏紧凑、高潮迭起、每集结尾留有钩子）
+3. 核心人物设定表（包含：角色名、外貌特征细节、性格闪光点、人物背景）
+4. 核心场景图谱说明
+
+要求：整体文风要符合現代短剧的快节奏，人设必须立体深刻。请先输出【第一阶段（1-10集）的剧本大纲与详细的分镜镜头拆解说明】。</code></pre>
+                </div>
+            </section>
+
+            <section id="step3" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">03</span>
+                        <h3 class="section-title">扩写标准剧本台词</h3>
+                    </div>
+                    <span class="badge">台词内容</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑</h4>
+                        <ul>
+                            <li><strong>建立角色档案</strong>：扩写台词的同时，明确规划具体出场人物，标清姓名、年龄、身份和基础性格。</li>
+                            <li><strong>凝练具象标志</strong>：抽取角色身上最显著、最独特、且极易在 AI 生图中精准复现的特征。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>人物外貌描述不能模棱两过。若缺乏极度具象的符号词（如某种独特的泪痣、束发带等），中后期利用大模型维持多主体特征一致性将变得寸步难行。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">SCRIPT_EXPANSION_PROMPT</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>接下来，请帮我详细扩写第1集到第5集的详细剧本。每一集需要包含具体的剧情、冲突点 and 反转。同时，请单独列出出场的人物档案，包括每个人的姓名、年龄、性格、以及他们最显著、易于在AI生图中表现的标志性外貌特征（例如：高马尾、右眼下的泪痣、白金相间的束发带、青色刺绣长袍等）。</code></pre>
+                </div>
+            </section>
+
+            <section id="step4" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">04</span>
+                        <h3 class="section-title">角色炼制：白底无动作资产图生成</h3>
+                    </div>
+                    <span class="badge">人物资产控图</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑与增补要点</h4>
+                        <ul>
+                            <li><strong>解耦与锁定</strong>：利用纯色背景锁定人物物理长相，方便在垫图或交叉渲染中单独抽取人物资产。</li>
+                            <li><strong>强制无手势无动作</strong>：声明“双手自然下垂”、“无任何姿态动向”，能最大化封锁画面形变，为视频生成器留出干净的语义解空间。</li>
+                            <li><strong>纯白背景硬核死锁</strong>：明确定义“solid white background, no background element”，完全剥离环境对人物边缘轮廓和光影偏色的污染。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>生成形象图资产时，提示词里绝对不要写诸如“手持利剑”、“挥舞”、“奔跑”等行为动词，否则多图融图和换装时极难统一。</li>
+                            <li>必须严禁任何背景杂质，否则进行后期一键抠图或者让视频大模型让其运动时会产生严重的边缘闪烁杂色。</li>
+                        </ul>
+                    </div>
+                </div>
+
+                 <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">获取角色生图提示词</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>你现在是 AI 影像资产的工业化制作总监。请依据我们刚才设定的【人物档案】，为我生成一套标准的“角色资产底图提示词（Character Asset Prompts）”。
+
+为了确保后续 AI 视频生成的稳定性，所有角色的提示词必须严格遵守以下【核心工业规范】：
+
+1. 构图与形态（Must follow）：
+   - 全身照（Full-body shot）。
+   - 纯白底（Isolated on a solid pure white background），绝对不能有任何背景元素或阴影。
+   - 绝对无动作（Static pose, arms naturally hanging down at sides, no gestures）。
+   - 绝对无表情（Neutral expression, emotionless face, front-facing view）。
+
+2. 视觉描述（Must follow）：
+   - 核心特征精准锚定（必须包含我们设定中的显著外貌标签，如泪痣、配饰、发型等）。
+   - 材质细节（Hyper-realistic skin texture, 8k resolution, cinematic studio lighting）。
+
+3. 格式要求：
+   - 请以代码块形式为每一个核心角色生成一个独立的 Prompt，直接可用于 Midjourney 或 Stable Diffusion。
+
+请开始生成：</code></pre>
+                </div>
+                
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">CHARACTER_ASSET_PROMPT_MALE (白底无动作-男角色形象图)</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>[Character Design Sheets - Male Lead Asset]
+Subject: A highly detailed cinematic studio full-body shot of a 28-year-old Chinese man, short textured black undercut hair, sharp eyebrows, piercing almond eyes, clean-shaven, distinctive silver ear cuff on his left ear.
+
+Pose & Actions: Standing straight, facing forward towards the camera, completely static pose, neutral expression, arms naturally hanging down at his sides, hands open and naturally resting at sides, no gestures, no active actions.
+
+Costume_Standard: Wearing a modern dark forest green techwear jacket, high collar, tech straps, matching black techwear cargo pants.
+Environment_Lock: Isolated on a solid pure white background, perfectly clean background, completely white backdrop, no background elements, no depth shadow.
+Render_Specs: Unreal Engine 5 render, hyper-realistic skin texture, 8k resolution, intricate details, photorealistic, studio lighting, crisp shadows, --ar 16:9 --v 6.0</code></pre>
+                </div>
+
+                <div class="prompt-container" style="margin-top: 12px;">
+                    <div class="prompt-header">
+                        <span class="prompt-label">CHARACTER_ASSET_PROMPT_FEMALE (白底无动作-女角色形象图)</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>[Character Design Sheets - Female Lead Asset]
+Subject: A highly detailed cinematic studio full-body shot of a 24-year-old Chinese woman, long straight black hair with elegant blunt bangs, soft facial features, expressive double eyelids, a distinct tiny beauty mark (teardrop mole) right under her right eye.
+
+Pose & Actions: Standing straight, facing forward towards the camera, completely static pose, neutral calm expression, arms naturally hanging down at her sides, hands open and naturally resting at sides, no gestures, no active actions.
+
+Costume_Standard: Wearing a sleek modern white premium silk blouse, clean lines, minimalist black wide-leg trousers.
+Environment_Lock: Isolated on a solid pure white background, perfectly clean background, completely white backdrop, no background elements, no depth shadow.
+Render_Specs: Unreal Engine 5 render, hyper-realistic skin texture, 8k resolution, intricate details, photorealistic, studio lighting, crisp shadows, --ar 16:9 --v 6.0</code></pre>
+                </div>
+            </section>
+
+            <section id="step5" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">05</span>
+                        <h3 class="section-title">规范精细化镜头描述</h3>
+                    </div>
+                    <span class="badge">镜头语言</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑</h4>
+                        <ul>
+                            <li><strong>分镜转换映射</strong>：将台词或零碎的剧情动作，精准映射并翻译为能被绘图 AI 读懂的艺术分镜。</li>
+                            <li><strong>规范三要素结构</strong>：每个分镜必须包含清晰的环境场景氛围、人物细微神态/动作以及明确的镜头语言词汇。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>在将文字发给 AI 转化前，你自己的脑海中必须对全剧脉络、人物基调有清晰的画面构想，盲目依赖大模型盲抽会导致画面张力大打折扣。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">STORYBOARD_SPEC_PROMPT</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>请将扩写的剧本转化为可用于 AI 图像生成的精细化分镜脚本。每一句台词或剧情动作，都需要转化为一段具体的画面镜头描述。镜头描述中必须包含：环境场景（光线、氛围、建筑）、人物动作神态、以及镜头语言（如：特写、近景、中景、俯拍、仰拍）。请用表格或者结构化的排版方式输出。</code></pre>
+                </div>
+            </section>
+
+            <section id="step6" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">06</span>
+                        <h3 class="section-title">电影级分镜环境绘制</h3>
+                    </div>
+                    <span class="badge">环境空间</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑</h4>
+                        <ul>
+                            <li><strong>主景深度锚定</strong>：细致刻画物理空间的每一处细节（如地表湿润度、宏伟建筑阴影、特殊光束等）。</li>
+                            <li><strong>高级光影渲染</strong>：引入电影大师级布光词汇（体积光、明暗对比、背光等），瞬间拉升图源底质。</li>
+                            <li><strong>画幅规格预设</strong>：严格设置输出参数比例，完美适配短视频平台的物理载体要求。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>环境描写与人物当前的激烈动作必须保持逻辑一致。切记将场景词和人物特征词解耦编写，从而方便在不同的镜头下灵活重组。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">CINEMATIC_SCENE_MASTER_PROMPT</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>[Cinematic Scene Concept Master]
+Environment: Deep underground ancient fantasy dungeon, towering stone pillars wrapped in glowing moss, damp stone ground, mist floating near the floor, a majestic but decaying stone throne in the background.
+
+Lighting_Setup: Volumetric lighting piercing through ceiling cracks, dramatic chiaroscuro, sharp contrast, masterfully placed backlight.
+Cinematography: Wide-angle establishing shot, low-angle perspective, deeply immersive atmosphere.
+Style_Keywords: Ultra-realistic, architectural rendering style, octane render, vivid detail, cinematic color grading, dark mood, --ar 16:9</code></pre>
+                </div>
+            </section>
+
+            <section id="step7" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">07</span>
+                        <h3 class="section-title">维持上下文关联能力</h3>
+                    </div>
+                    <span class="badge">上下文长效</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑</h4>
+                        <ul>
+                            <li><strong>强力约束灌输</strong>：在分批次扩写中，强制注入历史信息锁，令 AI 绝对尊奉前文设定好的外貌特征和故事基调。</li>
+                            <li><strong>工业化生产控制</strong>：选型对齐能力出众的顶流推理模型（如 DeepSeek、Gemini、Kimi 等），并通过分段投喂控制剧情连贯。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>大模型极易在漫长的多轮对话中陷入局部「幻觉」并遗忘之前的设定。每一步后续扩写，都必须在开头重新高能强调前文设定的物理死命令。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">CONTEXT_REINFORCE_PROMPT_1</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>非常好。请严格记住并保持前面几步我们已经确定的所有人物特征、剧情逻辑、以及分镜镜头风格。基于这些已经建立的上下文约束和设定，请继续为我扩写第6集到第10集的详细剧本与分镜脚本，确保逻辑严密、人物风格完全前后一致。</code></pre>
+                </div>
+                <div class="prompt-container" style="margin-top: 12px;">
+                    <div class="prompt-header">
+                        <span class="prompt-label">CONTEXT_REINFORCE_PROMPT_2 (实例生产版)</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>很好，现在请严格按照刚才对齐的结构逻辑与输出规范，为我生成剧本。
+
+【背景世界观与基础设定】：
+主角是一位现代的年轻科学家，因为意外身亡，重生穿越到了古代的一个世家大族里面。但他重生的身份却非常低微，是一名卑微的低等下人。但他身上带着现代的记忆以及一部分的高科技系统的设定，然后利用这些在古代反击那些瞧不起他、打击他的人，从而一步步解决问题，走向人生巅峰的故事。
+
+【剧本生成要求】：
+1. 剧本整体要求富有强烈的爽点与冲突。
+2. 绝对不能出现逻辑上的死循环和剧情硬伤（Bug）。
+3. 总共要求生成 50 集。
+4. 现在请先帮我生成第 1 集的详细剧本。第 1 集必须严格包含高冲击力的钩子开头、冲突矛盾激化、升级、以及片尾的悬念钩子。每一幕都需要清晰标注出【画面视觉描述（供 AI 绘图使用）】和【角色台词/旁白】。</code></pre>
+                </div>
+            </section>
+
+            <section id="step8" class="workflow-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <span class="step-number">08</span>
+                        <h3 class="section-title">视听动态与微控剪辑</h3>
+                    </div>
+                    <span class="badge">视听动态</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-card logic-box">
+                        <h4>核心逻辑</h4>
+                        <ul>
+                            <li><strong>图生视频镜头轨迹微调</strong>：在视频扩散大模型中注入特定的物理动向调控词（推拉摇移、微风拂动、极速平移等）。</li>
+                            <li><strong>毫秒级音画轨对齐</strong>：将人物 AI 语音、环境声效与生成的视频轨在非线性编辑软件中贴边咬死。</li>
+                        </ul>
+                    </div>
+                    <div class="meta-card warning-box">
+                        <h4>避坑指南</h4>
+                        <ul>
+                            <li>生成视频时，动态强度（Motion Intensity）不宜过高，否则面部容貌或底层物理结构会严重崩坏扭曲。</li>
+                            <li>跨多平台剪辑前必须对齐帧率（如24fps或30fps标准），谨防音画异步。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <span class="prompt-label">I2V_CAMERA_CONTROL_PROMPT</span>
+                        <button class="copy-btn" onclick="copyPrompt(this)">一键复制</button>
+                    </div>
+                    <pre><code>[Image-to-Video Camera Direction Controls]
+Camera_Movement: Slow panoramic cinematic pan from left to right, subtle camera crane movement upwards.
+Subject_Action: The character gently turns his head towards the camera, hair blowing slightly in the dark wind, smoke rising from a nearby cup in slow motion.
+
+Motion_Intensity: Motion scale set to 3 (Subtle and realistic, maintain facial integrity).
+Framerate_Target: 24fps cinema standard, perfectly stable temporal coherence.</code></pre>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="toast" class="toast">
+        <span class="toast-icon">✓</span>
+        <span id="toast-message">SUCCESS: PROMPT COPIED TO CLIPBOARD</span>
+    </div>
+
+    <script>
+        // --- 核心 JS 逻辑：丝滑点击定位 ---
+        function scrollToSection(id, element) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+            
+            // 立即响应样式高亮
+            const items = document.querySelectorAll('.step-item');
+            items.forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // --- 自动监听页面滚动高亮侧边导航 ---
+        window.addEventListener('scroll', () => {
+            const sections = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7', 'step8'];
+            const items = document.querySelectorAll('.step-item');
+            
+            let currentSectionId = '';
+            for (const sectionId of sections) {
+                const el = document.getElementById(sectionId);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    // 临界区阈值调校
+                    if (rect.top <= 120) {
+                        currentSectionId = sectionId;
+                    }
+                }
+            }
+
+            if (currentSectionId) {
+                sections.forEach((id, index) => {
+                    if (id === currentSectionId) {
+                        items[index].classList.add('active');
+                    } else {
+                        items[index].classList.remove('active');
+                    }
+                });
+            }
+        });
+
+        // --- 一键复制功能（向下兼容老版本浏览器） ---
+        function copyPrompt(button) {
+            const preElement = button.parentElement.nextElementSibling;
+            const codeElement = preElement.querySelector('code') || preElement;
+            const textToCopy = codeElement.innerText;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                triggerNotification(button, "SUCCESS: PROMPT COPIED");
+            }).catch(err => {
+                // Fallback 垫底兼容方案
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    triggerNotification(button, "SUCCESS: PROMPT COPIED (FALLBACK)");
+                } catch (e) {
+                    triggerNotification(button, "ERROR: COPY FAILED", true);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // --- 交互动态反馈微型状态机 ---
+        function triggerNotification(btn, message, isError = false) {
+            const toast = document.getElementById('toast');
+            const msgSpan = document.getElementById('toast-message');
+            const iconSpan = toast.querySelector('.toast-icon');
+
+            // 1. 弹出全局 Toast 提示
+            msgSpan.innerText = message;
+            if(isError) {
+                toast.style.borderColor = '#d94141';
+                iconSpan.innerText = '✕';
+                iconSpan.style.color = '#d94141';
+            } else {
+                toast.style.borderColor = 'var(--color-primary)';
+                iconSpan.innerText = '✓';
+                iconSpan.style.color = 'var(--color-primary)';
+            }
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+
+            // 2. 按钮状态文字联动转换
+            const originalText = btn.innerText;
+            btn.innerText = isError ? "FAILED" : "COPIED";
+            btn.style.borderColor = isError ? "#d94141" : "var(--color-primary)";
+            btn.style.color = isError ? "#d94141" : "var(--color-primary)";
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.borderColor = "";
+                btn.style.color = "";
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
