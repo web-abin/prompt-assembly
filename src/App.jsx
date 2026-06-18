@@ -11,6 +11,7 @@ import BatchResize from './pages/BatchResize'
 import SequenceFrame from './pages/SequenceFrame'
 import Spritesheet from './pages/Spritesheet'
 import SpritePlayer from './pages/SpritePlayer'
+import SpritesheetExtractor from './pages/SpritesheetExtractor'
 import RemoveBackground from './pages/RemoveBackground'
 import BrushCutout from './pages/BrushCutout'
 import ImageRegionInfo from './pages/ImageRegionInfo'
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="/sequence-frame" element={<SequenceFrame />} />
             <Route path="/spritesheet" element={<Spritesheet />} />
             <Route path="/sprite-player" element={<SpritePlayer />} />
+            <Route path="/spritesheet-extractor" element={<SpritesheetExtractor />} />
             <Route
               path="/img-to-spritesheet"
               element={
